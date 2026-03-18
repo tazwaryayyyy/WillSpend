@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WillSpend — The Cost of Doing Nothing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="noise"></div>
+    <nav>
+      <span class="logo">WILL<span class="accent">SPEND</span></span>
+      <span class="tagline-nav">Cost of Inaction Engine</span>
+    </nav>
+
+    <div class="hero-content">
+      <div class="eyebrow">FINANCIAL AUTOPSY</div>
+      <h1>How much has<br /><span class="strike-wrap"><span class="strikethrough">doing nothing</span></span><br />cost
+        you?</h1>
+      <p class="hero-sub">WillSpend calculates the exact dollar amount your passive financial decisions have quietly
+        drained from your future - compounded over time.</p>
+      <a href="#form" class="cta-btn">Run My Inaction Report →</a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-pill">Salary gaps</div>
+      <div class="stat-pill">Idle savings</div>
+      <div class="stat-pill">Missed investments</div>
+      <div class="stat-pill">Ghost subscriptions</div>
+      <div class="stat-pill">Unrefinanced debts</div>
+    </div>
+  </section>
+
+  <!-- FORM SECTION -->
+  <section class="form-section" id="form">
+    <form id="profile-form" onsubmit="event.preventDefault(); analyze();">
+      <div class="form-header">
+        <span class="section-label">STEP 01</span>
+        <h2>Your Financial Profile</h2>
+        <p>Fill in what applies to you. The more honest you are, the harder it hits.</p>
+      </div>
+
+      <div class="form-grid">
+
+        <!-- PERSONAL -->
+        <div class="form-card">
+          <div class="card-label">PERSONAL</div>
+          <div class="field-group">
+            <label>Country</label>
+            <select id="country" onchange="toggleCountryCards()">
+              <option value="US">United States</option>
+              <option value="India">India</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>City</label>
+            <input type="text" id="city" placeholder="e.g. Austin or Mumbai" />
+          </div>
+          <div class="field-group">
+            <label>Your Age</label>
+            <input type="number" id="age" placeholder="28" min="13" max="100" required oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Monthly Income (after tax) $</label>
+            <input type="number" id="monthly_income" placeholder="3500" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- 401K MATCH (US ONLY) -->
+        <div class="form-card" id="card-401k">
+          <div class="card-label">401K MATCH LEAK</div>
+          <div class="field-group">
+            <label>Employer Match % (e.g. 6)</label>
+            <input type="number" id="employer_match_pct" placeholder="6" step="0.1" min="0"
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Your Contribution %</label>
+            <input type="number" id="user_contribution_pct" placeholder="3" step="0.1" min="0"
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Years Not Fully Matching</label>
+            <input type="number" id="years_not_matching_401k" placeholder="2" min="0" oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- SIP DELAY (INDIA ONLY) -->
+        <div class="form-card" id="card-sip" style="display:none">
+          <div class="card-label">SIP DELAY COST</div>
+          <div class="field-group">
+            <label>Monthly SIP Amount You Could Have Started ₹</label>
+            <input type="number" id="monthly_sip_missed" placeholder="10000" min="0" oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Years Delayed</label>
+            <input type="number" id="years_sip_delayed" placeholder="3" min="0" oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- SALARY -->
+        <div class="form-card">
+          <div class="card-label">SALARY GAP</div>
+          <div class="field-group">
+            <label>Monthly Salary $</label>
+            <input type="number" id="current_salary" placeholder="3000" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Market Rate Salary $</label>
+            <input type="number" id="market_rate_salary" placeholder="3800" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Years at Same Salary</label>
+            <input type="number" id="years_at_same_salary" placeholder="2" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- SAVINGS -->
+        <div class="form-card">
+          <div class="card-label">IDLE SAVINGS</div>
+          <div class="field-group">
+            <label>Savings Balance $</label>
+            <input type="number" id="savings_balance" placeholder="10000" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Current Savings Rate %</label>
+            <input type="number" id="current_savings_rate" placeholder="0.5" step="0.1" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>HYSA Rate %</label>
+            <input type="number" id="high_yield_savings_rate" placeholder="4.5" step="0.1" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Years Idle</label>
+            <input type="number" id="years_savings_idle" placeholder="3" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- INVESTING -->
+        <div class="form-card">
+          <div class="card-label">MISSED INVESTING</div>
+          <div class="field-group">
+            <label>Monthly Missed Investment $</label>
+            <input type="number" id="monthly_investment_missed" placeholder="200" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+          <div class="field-group">
+            <label>Years Not Investing</label>
+            <input type="number" id="years_not_investing" placeholder="4" min="0" required
+              oninput="calculateLiveLoss()" />
+          </div>
+        </div>
+
+        <!-- SUBSCRIPTIONS -->
+        <div class="form-card full-width">
+          <div class="card-label">GHOST SUBSCRIPTIONS</div>
+          <div id="subscriptions-container">
+            <div class="sub-row">
+              <input type="text" class="sub-name" placeholder="Netflix, Gym, etc." />
+              <input type="number" class="sub-cost" placeholder="$/mo" min="0" oninput="calculateLiveLoss()" />
+              <input type="number" class="sub-months" placeholder="months active" min="0"
+                oninput="calculateLiveLoss()" />
+              <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+            </div>
+          </div>
+          <button type="button" class="add-btn" onclick="addSubscription()">+ Add Subscription</button>
+        </div>
+
+        <!-- DEBTS -->
+        <div class="form-card full-width">
+          <div class="card-label">UNREFINANCED DEBTS</div>
+          <div id="debts-container">
+            <div class="debt-row">
+              <input type="text" class="debt-name" placeholder="Student loan, Credit card..." />
+              <input type="number" class="debt-balance" placeholder="Balance $" min="0" oninput="calculateLiveLoss()" />
+              <input type="number" class="debt-current-rate" placeholder="Current rate %" min="0"
+                oninput="calculateLiveLoss()" />
+              <input type="number" class="debt-refinance-rate" placeholder="Refi rate %" min="0"
+                oninput="calculateLiveLoss()" />
+              <input type="number" class="debt-years" placeholder="Years" min="0" oninput="calculateLiveLoss()" />
+              <button type="button" class="remove-btn" onclick="removeRow(this)">✕</button>
+            </div>
+          </div>
+          <button type="button" class="add-btn" onclick="addDebt()">+ Add Debt</button>
+        </div>
+
+      </div>
+
+      <div class="submit-wrap">
+        <button class="submit-btn" id="analyze-btn" type="submit">
+          <span id="btn-text">Run Full Autopsy Report →</span>
+          <span id="btn-loader" style="display:none">Calculating...</span>
+        </button>
+        <p class="disclaimer">No data is stored. Everything runs locally in your session.</p>
+      </div>
+    </form>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-section" id="results" style="display:none">
+    <div class="results-header">
+      <span class="section-label">YOUR REPORT</span>
+      <h2>The Cost of <span class="accent">Doing Nothing</span></h2>
+    </div>
+
+    <!-- BENTO GRID -->
+    <div class="bento-grid">
+      <div class="bento-item main-cost">
+        <div class="card-label">TOTAL LEAK</div>
+        <div class="bento-value" id="total-cost">$0</div>
+        <div class="bento-sub">Accumulated over inaction period</div>
+      </div>
+
+      <div class="bento-item chart-tile">
+        <div class="card-label">DAMAGE BREAKDOWN</div>
+        <canvas id="inactionChart"></canvas>
+      </div>
+
+      <div class="bento-item thief-tile">
+        <div class="card-label">TIME THIEF</div>
+        <div class="bento-value small" id="time-thief">$0</div>
+        <div class="bento-sub">Loss per day of inaction</div>
+      </div>
+
+      <div class="bento-item counterfactual-tile">
+        <div class="card-label">COUNTERFACTUAL YOU</div>
+        <div class="bento-text" id="counterfactual-text">If you had acted, your net worth would be significantly higher.
+        </div>
+      </div>
+
+      <div class="bento-item recovery-tile">
+        <div class="card-label">RECOVERY SPEED</div>
+        <div class="bento-value small" id="recovery-speed">0 Mo</div>
+        <div class="bento-sub">To break even at current income</div>
+      </div>
+
+      <div class="bento-item items-tile">
+        <div class="card-label">INACTION ITEMS</div>
+        <div id="items-list"></div>
+      </div>
+    </div>
+
+    <div class="ai-report-card">
+      <div class="card-label">AI ADVISOR REPORT</div>
+      <div id="ai-report-content" class="ai-report-text"></div>
+    </div>
+
+    <div class="restart-wrap">
+      <button class="add-btn" onclick="restart()">← Run Another Analysis</button>
+    </div>
+  </section>
+
+  <div class="ticker-bar">
+    <div class="ticker-content">
+      <span class="ticker-label">ESTIMATED TOTAL LOSS:</span>
+      <span class="ticker-value" id="live-ticker-cost">$0</span>
+    </div>
+  </div>
+
+  <footer>
+    <span>WILLSPEND &copy; 2026 • Created by Tazwar Ahnaf Enan</span>
+    <span>Built for NextGen Product Lab Hackathon</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
