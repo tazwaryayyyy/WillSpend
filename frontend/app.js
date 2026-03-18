@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://willspend.onrender.com";
 
 let chart = null;
 
