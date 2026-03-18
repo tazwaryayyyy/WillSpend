@@ -77,6 +77,3 @@ Then open `frontend/index.html` in your browser.
 NextGen Product Lab Hackathon 2026 and Quest Hackathon 2026.
 
 Made by Tazwar Ahnaf Enan
-Built for
-NextGen Product Lab Hackathon 2026 and Quest Hackathon 2026.
-Made by Tazwar Ahnaf Enan
