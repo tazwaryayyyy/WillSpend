@@ -66,13 +66,14 @@ def recovery_months(lost_amount: float, monthly_income: float) -> int:
 
 def run_simulation(profile: UserProfile) -> SimulationResult:
     items: List[InactionItem] = []
+    currency = "₹" if profile.country == "India" else "$"
 
     # 1. Salary not negotiated
     s_loss = salary_loss(profile.current_salary, profile.market_rate_salary, profile.years_at_same_salary)
     if s_loss > 0:
         items.append(InactionItem(
             category="Salary Not Negotiated",
-            description=f"You've been earning ${profile.current_salary:,.0f}/mo when the market rate is ${profile.market_rate_salary:,.0f}/mo for {profile.years_at_same_salary} year(s).",
+            description=f"You've been earning {currency}{profile.current_salary:,.0f}/mo when the market rate is {currency}{profile.market_rate_salary:,.0f}/mo for {profile.years_at_same_salary} year(s).",
             total_cost=s_loss,
             recovery_months=recovery_months(s_loss, profile.monthly_income)
         ))
@@ -86,7 +87,7 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
     if savings_loss > 0:
         items.append(InactionItem(
             category="Savings Account Not Switched",
-            description=f"Your ${profile.savings_balance:,.0f} sitting at {profile.current_savings_rate}% instead of {profile.high_yield_savings_rate}% for {profile.years_savings_idle} year(s).",
+            description=f"Your {currency}{profile.savings_balance:,.0f} sitting at {profile.current_savings_rate}% instead of {profile.high_yield_savings_rate}% for {profile.years_savings_idle} year(s).",
             total_cost=savings_loss,
             recovery_months=recovery_months(savings_loss, profile.monthly_income)
         ))
@@ -96,7 +97,7 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
     if invest_loss > 0:
         items.append(InactionItem(
             category="Not Investing Monthly",
-            description=f"Not investing ${profile.monthly_investment_missed:,.0f}/mo for {profile.years_not_investing} year(s) at 10% avg market return.",
+            description=f"Not investing {currency}{profile.monthly_investment_missed:,.0f}/mo for {profile.years_not_investing} year(s) at 10% avg market return.",
             total_cost=invest_loss,
             recovery_months=recovery_months(invest_loss, profile.monthly_income)
         ))
@@ -121,7 +122,7 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
         sip_loss = future_value_missed(profile.monthly_sip_missed, profile.years_sip_delayed, 0.12)
         items.append(InactionItem(
             category="SIP Delay Cost",
-            description=f"Delaying your ₹{profile.monthly_sip_missed:,.0f}/mo SIP for {profile.years_sip_delayed} year(s) at 12% Nifty 50 avg return.",
+            description=f"Delaying your {currency}{profile.monthly_sip_missed:,.0f}/mo SIP for {profile.years_sip_delayed} year(s) at 12% Nifty 50 avg return.",
             total_cost=sip_loss,
             recovery_months=recovery_months(sip_loss, profile.monthly_income)
         ))
@@ -132,7 +133,7 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
         if cost > 0:
             items.append(InactionItem(
                 category=f"Unused Subscription: {sub.name}",
-                description=f"${sub.monthly_cost}/mo for {sub.months_active} months you probably forgot about.",
+                description=f"{currency}{sub.monthly_cost}/mo for {sub.months_active} months you probably forgot about.",
                 total_cost=cost,
                 recovery_months=recovery_months(cost, profile.monthly_income)
             ))
@@ -143,7 +144,7 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
         if d_loss > 0:
             items.append(InactionItem(
                 category=f"Debt Not Refinanced: {debt.name}",
-                description=f"Paying {debt.current_rate}% on ${debt.balance:,.0f} instead of refinancing at {debt.refinance_rate}% for {debt.years} year(s).",
+                description=f"Paying {debt.current_rate}% on {currency}{debt.balance:,.0f} instead of refinancing at {debt.refinance_rate}% for {debt.years} year(s).",
                 total_cost=d_loss,
                 recovery_months=recovery_months(d_loss, profile.monthly_income)
             ))
