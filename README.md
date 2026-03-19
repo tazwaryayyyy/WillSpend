@@ -1,70 +1,49 @@
-# 💀 WillSpend: The Financial Autopsy Engine
+# WillSpend
 
-**"How much has doing nothing cost you?"**
+Most financial tools show you what you have. WillSpend shows you what you threw away by doing nothing.
 
-Most financial tools tell you what you *have*. WillSpend tells you what you *could have had* if you hadn't been paralyzed by indecision. It’s a "Financial Autopsy" that calculates the exact dollar (or rupee) amount your passive decisions have quietly drained from your future—compounded over time.
-
-Built for the **NextGen Product Lab Hackathon**.
+It runs a compound simulation across every passive financial decision you've made — the salary you never negotiated, the savings account you never switched, the investments you kept putting off — and puts an exact dollar amount on the damage. Then an AI advisor tells you what that number actually means in real-world terms, and what you can do about it this week.
 
 ---
 
-## 🚀 The Vibe
-WillSpend isn't a boring budget tracker. It’s a high-contrast, brutalist, and "brutally honest" tool designed to spark action through regret. We use a dark, premium aesthetic (glassmorphism, noise textures, and neon accents) to make the data hit harder.
+## Features
 
-## ✨ Features
+**Inaction Simulator** — calculates compounded losses across salary gaps, idle savings, missed investments, 401k match leaks (US), SIP delays (India), forgotten subscriptions, and unrefinanced debt.
 
-### 1. The Inaction Simulator
-Calculates losses across multiple "leak" categories:
-- **Salary Gaps:** What you lost by not negotiating to market rate.
-- **Idle Savings:** The cost of keeping the emergency fund in a 0.01% account instead of an HYSA.
-- **Missed Investing:** The compounding tragedy of "waiting for a dip."
-- **401k Match Leak (US):** Leaving free employer money on the table.
-- **SIP Delay (India):** The heavy price of delaying your monthly investments.
-- **Ghost Subscriptions:** Money lost to services you forgot you owned.
-- **Unrefinanced Debt:** Extra interest paid on high-rate loans.
+**AI Advisor** — powered by LLaMA 3.3 70B via Groq. Generates a plain-English damage summary, a location-aware regret story ("that $40k was a down payment in Austin"), and a concrete recovery roadmap.
 
-### 2. AI Advisor (Powered by Llama 3.3)
-Our AI doesn't just give you numbers; it gives you perspective.
-- **The Damage:** A plain-English summary of your financial tragedy.
-- **Regret Stories:** Translates your loss into real-world terms based on your city (e.g., *"That $40k was a down payment on a condo in Austin"*).
-- **Recovery Roadmap:** Three concrete steps you can take *this week* to stop the bleeding.
+**Cold Start Overlay** — the backend runs on Render's free tier and sleeps after inactivity. A custom overlay with status messages and a progress bar keeps users informed during the wake-up instead of showing a broken app.
 
-### 3. Cold Start Engine
-Since it's hosted on Render's free tier, the backend can take a minute to wake up. We built a custom **Cold Start Overlay** that keeps you engaged with pulsing status updates and a realistic progress bar while the "engine" warms up.
+**PDF Export** — generates a clean downloadable report of the full analysis using jsPDF, client-side.
 
-### 4. Portable Autopsy (PDF Export)
-Generate a clean, professional PDF report of your failures to keep as a reminder (or to show your actual financial advisor).
+**Live Loss Ticker** — a sticky bar at the bottom updates your estimated total loss in real time as you fill out the form.
+
+**US and India support** — 401k match leak for US users, SIP delay cost for India users, with localized currency throughout.
 
 ---
 
-## 🛠️ Tech Stack
+## Stack
 
-**Frontend:**
-- **Vanilla HTML5/CSS3:** No frameworks, just raw performance and custom design tokens.
-- **Chart.js:** For the "Damage Breakdown" visualization.
-- **Marked.js:** To render the AI's markdown reports.
-- **jsPDF:** For client-side PDF generation.
-
-**Backend:**
-- **FastAPI (Python):** High-performance async API.
-- **Groq Cloud:** Running `llama-3.3-70b-versatile` for near-instant AI insights.
-- **Pydantic:** For strict data validation and simulation models.
+Backend is Python and FastAPI. AI inference runs on Groq cloud using `llama-3.3-70b-versatile`. Frontend is vanilla HTML, CSS, and JavaScript with Chart.js, Marked.js, and jsPDF. Deployed on Render and Netlify.
 
 ---
 
-## 🏃 Running Locally
+## Running locally
 
-### Backend
-1. Navigate to `/backend`.
-2. Create a `.env` file with your `GROQ_API_KEY`.
-3. Install dependencies: `pip install -r requirements.txt`.
-4. Run the server: `uvicorn main:app --reload`.
+```bash
+# Backend
+cd backend
+pip install -r ../requirements.txt
+# Add GROQ_API_KEY to .env
+uvicorn main:app --reload
 
-### Frontend
-1. Open `/frontend/index.html` in your browser (or use Live Server).
-2. Ensure `API_BASE` in `app.js` is set to `http://localhost:8000`.
+# Frontend
+# Open frontend/index.html in your browser
+# Make sure API_BASE in app.js is set to http://localhost:8000
+```
 
 ---
 
-## 📜 License
-Created by **Tazwar Ahnaf Enan** for the NextGen Product Lab Hackathon. © 2026.
+Built for NextGen Product Lab Hackathon 2026 and Quest Hackathon 2026.
+
+Made by Tazwar Ahnaf Enan
