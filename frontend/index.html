@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WillSpend — The Cost of Doing Nothing</title>
+  <meta name="description" content="WillSpend calculates the exact dollar amount your passive financial decisions have quietly drained from your future — compounded over time." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
@@ -13,6 +14,23 @@
 </head>
 
 <body>
+
+  <!-- COLD START LOADING OVERLAY -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none;" aria-live="polite" role="status">
+    <div class="loading-progress-bar">
+      <div class="loading-progress-fill" id="loading-progress-fill"></div>
+    </div>
+    <div class="loading-content">
+      <div class="loading-logo">WILL<span class="accent">SPEND</span></div>
+      <div class="loading-message" id="loading-message">Waking up the engine...</div>
+      <div class="loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="loading-timeout-msg" id="loading-timeout-msg" style="display:none;">
+        Still working... Render free tier is warming up. Hang tight.
+      </div>
+    </div>
+  </div>
 
   <!-- HERO -->
   <section class="hero">
@@ -55,22 +73,22 @@
         <div class="form-card">
           <div class="card-label">PERSONAL</div>
           <div class="field-group">
-            <label>Country</label>
+            <label for="country">Country</label>
             <select id="country" onchange="toggleCountryCards()">
               <option value="US">United States</option>
               <option value="India">India</option>
             </select>
           </div>
           <div class="field-group">
-            <label>City</label>
+            <label for="city">City</label>
             <input type="text" id="city" placeholder="e.g. Austin or Mumbai" />
           </div>
           <div class="field-group">
-            <label>Your Age</label>
+            <label for="age">Your Age</label>
             <input type="number" id="age" placeholder="28" min="13" max="100" required oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Monthly Income (after tax) $</label>
+            <label for="monthly_income">Monthly Income (after tax) $</label>
             <input type="number" id="monthly_income" placeholder="3500" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
@@ -80,17 +98,17 @@
         <div class="form-card" id="card-401k">
           <div class="card-label">401K MATCH LEAK</div>
           <div class="field-group">
-            <label>Employer Match % (e.g. 6)</label>
+            <label for="employer_match_pct">Employer Match % (e.g. 6)</label>
             <input type="number" id="employer_match_pct" placeholder="6" step="0.1" min="0"
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Your Contribution %</label>
+            <label for="user_contribution_pct">Your Contribution %</label>
             <input type="number" id="user_contribution_pct" placeholder="3" step="0.1" min="0"
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Years Not Fully Matching</label>
+            <label for="years_not_matching_401k">Years Not Fully Matching</label>
             <input type="number" id="years_not_matching_401k" placeholder="2" min="0" oninput="calculateLiveLoss()" />
           </div>
         </div>
@@ -99,11 +117,11 @@
         <div class="form-card" id="card-sip" style="display:none">
           <div class="card-label">SIP DELAY COST</div>
           <div class="field-group">
-            <label>Monthly SIP Amount You Could Have Started ₹</label>
+            <label for="monthly_sip_missed">Monthly SIP Amount You Could Have Started ₹</label>
             <input type="number" id="monthly_sip_missed" placeholder="10000" min="0" oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Years Delayed</label>
+            <label for="years_sip_delayed">Years Delayed</label>
             <input type="number" id="years_sip_delayed" placeholder="3" min="0" oninput="calculateLiveLoss()" />
           </div>
         </div>
@@ -112,17 +130,17 @@
         <div class="form-card">
           <div class="card-label">SALARY GAP</div>
           <div class="field-group">
-            <label>Monthly Salary $</label>
+            <label for="current_salary">Monthly Salary $</label>
             <input type="number" id="current_salary" placeholder="3000" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Market Rate Salary $</label>
+            <label for="market_rate_salary">Market Rate Salary $</label>
             <input type="number" id="market_rate_salary" placeholder="3800" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Years at Same Salary</label>
+            <label for="years_at_same_salary">Years at Same Salary</label>
             <input type="number" id="years_at_same_salary" placeholder="2" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
@@ -132,22 +150,22 @@
         <div class="form-card">
           <div class="card-label">IDLE SAVINGS</div>
           <div class="field-group">
-            <label>Savings Balance $</label>
+            <label for="savings_balance">Savings Balance $</label>
             <input type="number" id="savings_balance" placeholder="10000" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Current Savings Rate %</label>
+            <label for="current_savings_rate">Current Savings Rate %</label>
             <input type="number" id="current_savings_rate" placeholder="0.5" step="0.1" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>HYSA Rate %</label>
+            <label for="high_yield_savings_rate">HYSA Rate %</label>
             <input type="number" id="high_yield_savings_rate" placeholder="4.5" step="0.1" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Years Idle</label>
+            <label for="years_savings_idle">Years Idle</label>
             <input type="number" id="years_savings_idle" placeholder="3" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
@@ -157,12 +175,12 @@
         <div class="form-card">
           <div class="card-label">MISSED INVESTING</div>
           <div class="field-group">
-            <label>Monthly Missed Investment $</label>
+            <label for="monthly_investment_missed">Monthly Missed Investment $</label>
             <input type="number" id="monthly_investment_missed" placeholder="200" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
           <div class="field-group">
-            <label>Years Not Investing</label>
+            <label for="years_not_investing">Years Not Investing</label>
             <input type="number" id="years_not_investing" placeholder="4" min="0" required
               oninput="calculateLiveLoss()" />
           </div>
@@ -262,6 +280,13 @@
       <div id="ai-report-content" class="ai-report-text"></div>
     </div>
 
+    <!-- DOWNLOAD BUTTON -->
+    <div class="download-wrap">
+      <button class="download-btn" id="download-btn" onclick="downloadPDF()">
+        ↓ Download Full Report as PDF
+      </button>
+    </div>
+
     <div class="restart-wrap">
       <button class="add-btn" onclick="restart()">← Run Another Analysis</button>
     </div>
@@ -281,7 +306,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="app.js"></script>
+
 </body>
 
 </html>

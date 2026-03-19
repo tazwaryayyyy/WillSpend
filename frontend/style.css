@@ -266,10 +266,11 @@ input[type="number"] {
   outline: none;
   transition: border-color 0.2s;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 
 select {
   width: 100%;
@@ -282,7 +283,7 @@ select {
   outline: none;
   cursor: pointer;
   -webkit-appearance: none;
-  appearance: none; /* remove default arrow */
+  appearance: none;
 }
 
 select:focus { border-color: var(--accent); }
@@ -397,7 +398,7 @@ input:focus { border-color: var(--accent); }
   justify-content: space-between;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* override per-tile below for items-tile */
 }
 
 .bento-item::before {
@@ -423,7 +424,15 @@ input:focus { border-color: var(--accent); }
 .chart-tile { grid-column: span 2; grid-row: span 2; padding: 1.5rem; }
 .thief-tile, .recovery-tile { grid-column: span 1; }
 .counterfactual-tile { grid-column: span 2; min-height: 150px; }
-.items-tile { grid-column: span 2; max-height: 440px; }
+.items-tile { grid-column: span 2; max-height: 440px; overflow-y: auto; overflow-x: hidden; }
+
+/* Dark scrollbar for items tile */
+.items-tile::-webkit-scrollbar { width: 4px; }
+.items-tile::-webkit-scrollbar-track { background: var(--bg3); }
+.items-tile::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.items-tile::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+/* Firefox */
+.items-tile { scrollbar-width: thin; scrollbar-color: var(--border) var(--bg3); }
 
 .bento-value {
   font-size: clamp(2.5rem, 5vw, 4.2rem);
@@ -483,23 +492,11 @@ input:focus { border-color: var(--accent); }
   }
 }
 
-.chart-card, .items-card, .ai-report-card {
+.ai-report-card {
   background: var(--bg3);
   border: 1px solid var(--border);
   padding: 1.8rem;
-}
-
-.ai-report-card {
   margin-bottom: 2rem;
-}
-
-.chart-card canvas {
-  max-height: 320px;
-}
-
-.items-card {
-  overflow-y: auto;
-  max-height: 400px;
 }
 
 .item-row {
@@ -536,10 +533,6 @@ input:focus { border-color: var(--accent); }
   font-size: 0.68rem;
   color: var(--text-muted);
   margin-top: 0.2rem;
-}
-
-.ai-report-card {
-  margin-bottom: 2rem;
 }
 
 .ai-report-text {
@@ -589,6 +582,37 @@ input:focus { border-color: var(--accent); }
   font-weight: 600;
 }
 
+/* DOWNLOAD BUTTON */
+.download-wrap {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.download-btn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  padding: 0.9rem 2.2rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+  text-transform: uppercase;
+}
+
+.download-btn:hover {
+  background: var(--accent);
+  color: #0a0a0a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(232, 255, 71, 0.2);
+}
+
+.download-btn:active {
+  transform: translateY(0);
+}
+
 /* TICKER BAR */
 .ticker-bar {
   position: fixed;
@@ -627,7 +651,7 @@ input:focus { border-color: var(--accent); }
 
 .restart-wrap {
   text-align: center;
-  margin-bottom: 4rem; /* so it doesn't get covered by ticker */
+  margin-bottom: 4rem;
 }
 
 /* FOOTER */
@@ -642,12 +666,119 @@ footer {
   letter-spacing: 0.1em;
 }
 
+/* ================================
+   COLD START LOADING OVERLAY
+================================ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.97);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 1s linear;
+  box-shadow: 0 0 8px rgba(232, 255, 71, 0.6);
+}
+
+.loading-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loading-logo {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.loading-message {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  animation: messagePulse 1.5s ease-in-out infinite;
+  min-height: 1.5em;
+}
+
+@keyframes messagePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.loading-dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.loading-timeout-msg {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent2);
+  letter-spacing: 0.08em;
+  max-width: 320px;
+  text-align: center;
+  line-height: 1.6;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  padding: 0.8rem 1.2rem;
+  animation: fadeUp 0.4s ease forwards;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   nav, .hero-content, .hero-stats, .form-section, .results-section, footer {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
+  .tagline-nav { display: none; }
   .sub-row, .debt-row { flex-direction: column; }
   .sub-row input, .debt-row input { width: 100%; }
+  footer { flex-direction: column; gap: 0.5rem; }
+  .ticker-bar { padding: 0.8rem 1.5rem; }
 }
