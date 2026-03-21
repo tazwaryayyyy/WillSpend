@@ -44,6 +44,6 @@ uvicorn main:app --reload
 
 ---
 
-Built for NextGen Product Lab Hackathon 2026 and Quest Hackathon 2026.
+Built for Quest Hackathon 2026, Dev Annual Hackathon, and ImpactHacks 2026.
 
 Made by Tazwar Ahnaf Enan
