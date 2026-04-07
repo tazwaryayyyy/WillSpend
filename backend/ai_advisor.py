@@ -1,13 +1,13 @@
 import os
-from groq import Groq
 from models import SimulationResult, UserProfile
 from dotenv import load_dotenv
+from ai_client import get_ai_response
+from cache_manager import cached_ai_call
 
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-
+@cached_ai_call(ttl_seconds=300)
 def generate_report(simulation: SimulationResult, profile: UserProfile) -> str:
     items_text = "\n".join([
         f"- {item.category}: ${item.total_cost:,.2f} lost | Recovery: ~{item.recovery_months} months"
@@ -36,13 +36,7 @@ Write a structured report with these 3 specific sections:
 Keep the total response under 400 words. Use markdown headings (##) for sections."""
 
     try:
-        response = client.chat.completions.create(
-            # Using the same model as before
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=600,
-            temperature=0.7
-        )
-        return response.choices[0].message.content
+        response = get_ai_response(prompt, f"simulation_{simulation.total_inaction_cost}_profile_{profile.age}_{profile.country}")
+        return response
     except Exception as e:
         return f"The AI Advisor is currently offline due to a connection error. However, your data is visible above. (Error: {str(e)})"

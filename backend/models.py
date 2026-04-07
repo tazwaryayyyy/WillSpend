@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 
 class Subscription(BaseModel):
@@ -52,11 +52,14 @@ class InactionItem(BaseModel):
     description: str
     total_cost: float
     recovery_months: int               # how many months to recover this loss
+    action_hint: str = ""              # suggested action to recover
+    estimated_recovery_1year: float = 0.0  # estimated amount recoverable in 1 year
 
 
 class SimulationResult(BaseModel):
     total_inaction_cost: float
     items: List[InactionItem]
+    categories: Dict[str, Dict[str, Any]] = {}  # New breakdown by category
 
 
 class WillSpendResponse(BaseModel):
