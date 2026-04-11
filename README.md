@@ -2,45 +2,52 @@
 
 Most financial tools show you what you have. WillSpend shows you what you threw away by doing nothing.
 
-It runs a compound simulation across every passive financial decision you've made — the salary you never negotiated, the savings account you never switched, the investments you kept putting off — and puts an exact dollar amount on the damage. Then an AI advisor tells you what that number actually means in real-world terms, and what you can do about it this week.
+It calculates the real cost of every passive financial decision you have made. The salary you never negotiated. The savings account you never switched. The investments you kept putting off. Then it puts an exact dollar amount on the damage and gives you a concrete plan to recover.
 
----
+## What It Does
 
-## Features
+**Inaction Simulator** calculates compounded losses across:
+- Salary gaps (what you could be earning vs what you earn now)
+- Idle savings (low interest accounts vs high yield)
+- Missed investments (compound growth you never captured)
+- 401k match leaks (US only, leaving employer money on the table)
+- SIP delays (India only, waiting too long to start investing)
+- Forgotten subscriptions ( recurring charges for things you forgot about)
+- Unrefinanced debt (paying high interest when you could pay less)
 
-**Inaction Simulator** — calculates compounded losses across salary gaps, idle savings, missed investments, 401k match leaks (US), SIP delays (India), forgotten subscriptions, and unrefinanced debt.
+**AI Advisor** uses LLaMA 3.3 70B via Groq to generate a plain English summary of your damage. It includes location specific context ("that $40k was a down payment in Austin") and a week by week recovery roadmap.
 
-**AI Advisor** — powered by LLaMA 3.3 70B via Groq. Generates a plain-English damage summary, a location-aware regret story ("that $40k was a down payment in Austin"), and a concrete recovery roadmap.
+**PDF Export** generates a clean downloadable report of your full analysis.
 
-**Cold Start Overlay** — the backend runs on Render's free tier and sleeps after inactivity. A custom overlay with status messages and a progress bar keeps users informed during the wake-up instead of showing a broken app.
+**Live Loss Ticker** updates your estimated total loss in real time as you fill out the form.
 
-**PDF Export** — generates a clean downloadable report of the full analysis using jsPDF, client-side.
-
-**Live Loss Ticker** — a sticky bar at the bottom updates your estimated total loss in real time as you fill out the form.
-
-**US and India support** — 401k match leak for US users, SIP delay cost for India users, with localized currency throughout.
-
----
+**US and India support** with localized currency and country specific calculations.
 
 ## Stack
 
-Backend is Python and FastAPI. AI inference runs on Groq cloud using `llama-3.3-70b-versatile`. Frontend is vanilla HTML, CSS, and JavaScript with Chart.js, Marked.js, and jsPDF. Deployed on Render and Netlify.
+- **Backend**: Python, FastAPI
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Framer Motion
+- **AI**: Groq Cloud with LLaMA 3.3 70B
+- **PDF**: jsPDF client side generation
 
----
+## Running Locally
 
-## Running locally
-
+Backend:
 ```bash
-# Backend
 cd backend
 pip install -r ../requirements.txt
 # Add GROQ_API_KEY to .env
 uvicorn main:app --reload
-
-# Frontend
-# Open frontend/index.html in your browser
-# Make sure API_BASE in app.js is set to http://localhost:8000
 ```
+
+Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Make sure the frontend API calls point to `http://localhost:8000`.
 
 ---
 
