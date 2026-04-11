@@ -44,6 +44,4 @@ uvicorn main:app --reload
 
 ---
 
-Built for Quest Hackathon 2026, Dev Annual Hackathon, and ImpactHacks 2026.
-
 Made by Tazwar Ahnaf Enan
