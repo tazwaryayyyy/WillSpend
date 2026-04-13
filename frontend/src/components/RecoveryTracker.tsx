@@ -4,11 +4,22 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, Calendar, TrendingUp } from 'lucide-react'
 
-interface RecoveryTrackerProps {
-  actions: Array<any>
+interface Action {
+  id: string
+  category: string
+  action_hint: string
+  amount: number
+  timestamp: string
+  completed: boolean
 }
 
-export function RecoveryTracker({ actions }: RecoveryTrackerProps) {
+interface RecoveryTrackerProps {
+  actions: Action[]
+  country?: string
+}
+
+export function RecoveryTracker({ actions, country }: RecoveryTrackerProps) {
+  const currency = country === 'Bangladesh' ? '৳' : (country === 'India' ? '₹' : '$')
   const [streak, setStreak] = useState(0)
   const [totalRecovered, setTotalRecovered] = useState(0)
 
@@ -140,7 +151,7 @@ export function RecoveryTracker({ actions }: RecoveryTrackerProps) {
                 transition={{ delay: 0.4 }}
                 className="text-3xl font-display font-bold text-rose mb-1"
               >
-                ${totalRecovered.toLocaleString()}
+                {currency}{totalRecovered.toLocaleString()}
               </motion.div>
               <div className="text-xs font-mono uppercase tracking-wider text-cream/40">Total Recovered</div>
             </motion.div>
@@ -214,7 +225,7 @@ export function RecoveryTracker({ actions }: RecoveryTrackerProps) {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-display font-bold text-lime">
-                      +${action.amount?.toLocaleString() || '0'}
+                      +{currency}{action.amount?.toLocaleString() || '0'}
                     </div>
                   </div>
                 </motion.div>

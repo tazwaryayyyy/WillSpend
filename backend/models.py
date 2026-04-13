@@ -46,6 +46,13 @@ class UserProfile(BaseModel):
     monthly_sip_missed: Optional[float] = 0.0
     years_sip_delayed: Optional[int] = 0
 
+    # Bangladesh specific fields
+    mobile_banking_balance: Optional[float] = 0.0
+    years_mobile_banking_idle: Optional[int] = 0
+    monthly_dps_missed: Optional[float] = 0.0
+    months_dps_delayed: Optional[int] = 0
+
+
 
 class InactionItem(BaseModel):
     category: str

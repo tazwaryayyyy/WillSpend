@@ -66,15 +66,18 @@ class PDFReportGenerator:
         data = [['Category', 'Amount Lost', 'Action Hint', '1-Year Recovery']]
         
         categories = simulation_data.get('categories', {})
+        country = simulation_data.get('country', 'US')
+        currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
+        
         for category, details in categories.items():
-            amount = f"${details.get('amount', 0):,.2f}"
+            amount = f"{currency}{details.get('amount', 0):,.2f}"
             action_hint = details.get('action_hint', 'N/A')
-            recovery = f"${details.get('estimated_recovery_1year', 0):,.2f}"
+            recovery = f"{currency}{details.get('estimated_recovery_1year', 0):,.2f}"
             data.append([category, amount, action_hint, recovery])
         
         # Add total row
         total_loss = simulation_data.get('total_inaction_cost', 0)
-        data.append(['<b>TOTAL LOSS</b>', f'<b>${total_loss:,.2f}</b>', '', ''])
+        data.append(['<b>TOTAL LOSS</b>', f'<b>{currency}{total_loss:,.2f}</b>', '', ''])
         
         table = Table(data, colWidths=[2.5*inch, 1.2*inch, 2*inch, 1.2*inch])
         
@@ -117,12 +120,15 @@ class PDFReportGenerator:
             reverse=True
         )
         
+        country = simulation_data.get('country', 'US')
+        currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
+        
         # Take top 3 actions
         for i, (category, details) in enumerate(sorted_categories[:3], 1):
             action_text = f"""
             <b>{i}. {category}</b><br/>
             Action: {details.get('action_hint', 'Take action')}<br/>
-            Expected recovery in 1 year: ${details.get('estimated_recovery_1year', 0):,.2f}<br/>
+            Expected recovery in 1 year: {currency}{details.get('estimated_recovery_1year', 0):,.2f}<br/>
             <br/>
             <font color="gray">☐ Completed</font>
             """
@@ -156,10 +162,13 @@ class PDFReportGenerator:
             elements.append(Spacer(1, 20))
             
             # Report metadata
+            country = user_profile.get('country', 'US')
+            currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
+            
             metadata = f"""
             <b>Generated on:</b> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}<br/>
-            <b>User Profile:</b> Age {user_profile.get('age', 'N/A')}, {user_profile.get('country', 'N/A')}<br/>
-            <b>Monthly Income:</b> ${user_profile.get('monthly_income', 0):,.2f}
+            <b>User Profile:</b> Age {user_profile.get('age', 'N/A')}, {country}<br/>
+            <b>Monthly Income:</b> {currency}{user_profile.get('monthly_income', 0):,.2f}
             """
             elements.append(Paragraph(metadata, self.styles['CustomBody']))
             elements.append(Spacer(1, 20))
@@ -168,9 +177,11 @@ class PDFReportGenerator:
             elements.append(Paragraph("Executive Summary", self.styles['CustomHeading']))
             total_loss = simulation_data.get('total_inaction_cost', 0)
             num_categories = len(simulation_data.get('categories', {}))
+            country = user_profile.get('country', 'US')
+            currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
             
             summary = f"""
-            This analysis identified a total financial loss of <b>${total_loss:,.2f}</b> due to inaction across 
+            This analysis identified a total financial loss of <b>{currency}{total_loss:,.2f}</b> due to inaction across 
             <b>{num_categories}</b> categories. The largest opportunity for recovery comes from taking immediate 
             action on your highest-impact items. The detailed breakdown below shows exactly where you're losing 
             money and how much you can recover in the next year.

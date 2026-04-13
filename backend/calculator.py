@@ -1,6 +1,7 @@
 from models import UserProfile, SimulationResult, InactionItem
 from typing import List
 from cache_manager import cached_simulation
+from bangladesh_calculations import calculate_bangladesh_specific_metrics
 
 
 def future_value_missed(monthly_amount: float, years: int, annual_rate: float = 0.10) -> float:
@@ -102,7 +103,14 @@ def estimate_recovery_1year(total_cost: float, category: str) -> float:
 @cached_simulation(ttl_seconds=600)
 def run_simulation(profile: UserProfile) -> SimulationResult:
     items: List[InactionItem] = []
-    currency = "₹" if profile.country == "India" else "$"
+    
+    if profile.country == "India":
+        currency = "₹"
+    elif profile.country == "Bangladesh":
+        currency = "৳"
+    else:
+        currency = "$"
+
 
     # 1. Salary not negotiated
     s_loss = salary_loss(profile.current_salary, profile.market_rate_salary, profile.years_at_same_salary)
@@ -177,6 +185,34 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
             action_hint=get_action_hint(category),
             estimated_recovery_1year=estimate_recovery_1year(sip_loss, category)
         ))
+
+    # 5.1 Bangladesh Specifics
+    if profile.country == "Bangladesh":
+        bd_metrics = calculate_bangladesh_specific_metrics(profile.dict())
+        
+        if "mobile_banking_idle_cost" in bd_metrics:
+            cost = bd_metrics["mobile_banking_idle_cost"]
+            category = "Idle Mobile Banking"
+            items.append(InactionItem(
+                category=category,
+                description=f"Your {currency}{profile.mobile_banking_balance:,.0f} in bKash/Nagad at 4.5% instead of 7.5% FD for {profile.years_mobile_banking_idle} year(s).",
+                total_cost=cost,
+                recovery_months=recovery_months(cost, profile.monthly_income),
+                action_hint="transfer to high-interest FDR/DPS",
+                estimated_recovery_1year=estimate_recovery_1year(cost, "Savings Account Not Switched")
+            ))
+            
+        if "dps_missed_cost" in bd_metrics:
+            cost = bd_metrics["dps_missed_cost"]
+            category = "Missed DPS"
+            items.append(InactionItem(
+                category=category,
+                description=f"Missing your {currency}{profile.monthly_dps_missed:,.0f}/mo DPS for {profile.months_dps_delayed} months at 7% maturity return.",
+                total_cost=cost,
+                recovery_months=recovery_months(cost, profile.monthly_income),
+                action_hint="open a monthly DPS immediately",
+                estimated_recovery_1year=estimate_recovery_1year(cost, "SIP Delay Cost")
+            ))
 
     # 6. Subscriptions
     for sub in profile.subscriptions:

@@ -73,7 +73,10 @@ function App() {
                 setShowResults(true)
               }}
             />
-            <RecoveryTracker actions={recoveryActions} />
+            <RecoveryTracker 
+              actions={recoveryActions} 
+              country={analysisData?.profile?.country}
+            />
           </>
         )}
       </main>

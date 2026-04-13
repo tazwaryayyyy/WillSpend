@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class RecoveryAction(BaseModel):
     action_id: str
     estimated_recovery: float
-    timestamp: str
+    timestamp: datetime
 
 # Model for PDF report generation
 class PDFReportRequest(BaseModel):
@@ -38,9 +38,19 @@ class PDFReportRequest(BaseModel):
 
 app = FastAPI(title="WillSpend API")
 
+# CORS configuration
+# In production, this should include your specific Netlify and localhost URLs
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://willspend.netlify.app",
+    "https://will-spend.netlify.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -114,11 +124,8 @@ async def validate_recovery(action: RecoveryAction):
         if not action.action_id or action.estimated_recovery < 0:
             raise HTTPException(status_code=400, detail="Invalid action data")
         
-        # Validate timestamp format (basic check)
-        try:
-            datetime.fromisoformat(action.timestamp.replace('Z', '+00:00'))
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid timestamp format")
+        # Validate timestamp (now handled by Pydantic, but we can do extra checks if needed)
+        # action.timestamp is already a datetime object
         
         # In a real implementation, this would save to a database
         # For now, we just validate and return success
@@ -128,7 +135,7 @@ async def validate_recovery(action: RecoveryAction):
             "valid": True,
             "message": "Action validated",
             "action_id": action.action_id,
-            "estimated_recovery": action.estimated_recovery,
+            "estimated_recovery": round(action.estimated_recovery, 2),
             "validated_at": datetime.now().isoformat()
         }
         
@@ -219,7 +226,21 @@ if os.path.exists(FRONTEND_PATH):
 
 @app.get("/")
 async def root():
+    """
+    Health check for Render.
+    """
+    return {
+        "status": "active",
+        "service": "WillSpend API",
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat()
+    }
+
+
+# Optional: Keep the static serving if needed for local testing
+@app.get("/index")
+async def index():
     index_path = os.path.join(FRONTEND_PATH, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return {"message": "WillSpend API is running. Frontend not found."}
+    return {"message": "Frontend index.html not found."}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight, Loader2 } from 'lucide-react'
-import axios from 'axios'
+import apiClient from '@/api/client'
+import { LiveLossTicker } from './LiveLossTicker'
 
 interface FormData {
   age: number
@@ -24,6 +25,10 @@ interface FormData {
   years_not_matching_401k?: number
   monthly_sip_missed?: number
   years_sip_delayed?: number
+  mobile_banking_balance?: number
+  years_mobile_banking_idle?: number
+  monthly_dps_missed?: number
+  months_dps_delayed?: number
   subscriptions: Array<{ name: string; monthly_cost: number; months_active: number }>
   debts: Array<{ name: string; balance: number; current_rate: number; refinance_rate: number; years: number }>
 }
@@ -52,6 +57,10 @@ export function FormSection({ onSubmit }: FormSectionProps) {
     years_not_matching_401k: 2,
     monthly_sip_missed: 0,
     years_sip_delayed: 0,
+    mobile_banking_balance: 0,
+    years_mobile_banking_idle: 0,
+    monthly_dps_missed: 0,
+    months_dps_delayed: 0,
     subscriptions: [{ name: 'Netflix', monthly_cost: 15.99, months_active: 12 }],
     debts: [{ name: 'Credit Card', balance: 5000, current_rate: 18.9, refinance_rate: 12.9, years: 3 }],
   })
@@ -84,6 +93,17 @@ export function FormSection({ onSubmit }: FormSectionProps) {
       if (formData.country === 'India' && formData.monthly_sip_missed && formData.years_sip_delayed) {
         const sipLoss = formData.monthly_sip_missed * 12 * formData.years_sip_delayed * 1.5
         totalLoss += sipLoss
+      }
+
+      if (formData.country === 'Bangladesh') {
+        if (formData.mobile_banking_balance && formData.years_mobile_banking_idle) {
+          const mbLoss = formData.mobile_banking_balance * (Math.pow(1 + 0.03 / 100, formData.years_mobile_banking_idle) - 1)
+          totalLoss += mbLoss
+        }
+        if (formData.monthly_dps_missed && formData.months_dps_delayed) {
+          const dpsLoss = formData.monthly_dps_missed * formData.months_dps_delayed * 1.2
+          totalLoss += dpsLoss
+        }
       }
 
       formData.subscriptions.forEach(sub => {
@@ -145,13 +165,26 @@ export function FormSection({ onSubmit }: FormSectionProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Basic validation
+    if (formData.age < 18 || formData.age > 100) {
+      alert("Please enter a valid age between 18 and 100")
+      return
+    }
+    
+    if (formData.monthly_income < 0 || formData.current_salary < 0) {
+      alert("Income and salary cannot be negative")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const response = await axios.post('/api/analyze', formData)
+      const response = await apiClient.post('/api/analyze', formData)
       onSubmit(response.data)
     } catch (error) {
       console.error('Analysis failed:', error)
+      alert("Failed to analyze your data. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
     }
@@ -203,21 +236,7 @@ export function FormSection({ onSubmit }: FormSectionProps) {
           </motion.p>
         </div>
 
-        {/* Live Loss Ticker */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="bg-charcoal-800/50 border border-rose/20 rounded-lg p-8 mb-16 text-center card-hover"
-        >
-          <div className="text-xs font-mono uppercase tracking-[0.2em] text-cream/40 mb-3">
-            Estimated Total Loss
-          </div>
-          <div className="text-5xl md:text-6xl font-display font-bold gradient-text mb-2">
-            ${liveLoss.toLocaleString()}
-          </div>
-          <div className="text-xs font-mono text-cream/30">Updates as you type</div>
-        </motion.div>
+        <LiveLossTicker targetValue={liveLoss} country={formData.country} />
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -238,6 +257,7 @@ export function FormSection({ onSubmit }: FormSectionProps) {
                   >
                     <option value="US">United States</option>
                     <option value="India">India</option>
+                    <option value="Bangladesh">Bangladesh</option>
                   </select>
                 </div>
 
@@ -263,7 +283,9 @@ export function FormSection({ onSubmit }: FormSectionProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Monthly Income ($)</label>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">
+                    Monthly Income ({formData.country === 'Bangladesh' ? '৳' : (formData.country === 'India' ? '₹' : '$')})
+                  </label>
                   <input
                     type="number"
                     value={formData.monthly_income}
@@ -283,7 +305,9 @@ export function FormSection({ onSubmit }: FormSectionProps) {
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Current Monthly Salary ($)</label>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">
+                    Current Monthly Salary ({formData.country === 'Bangladesh' ? '৳' : (formData.country === 'India' ? '₹' : '$')})
+                  </label>
                   <input
                     type="number"
                     value={formData.current_salary}
@@ -293,7 +317,9 @@ export function FormSection({ onSubmit }: FormSectionProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Market Rate Salary ($)</label>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">
+                    Market Rate Salary ({formData.country === 'Bangladesh' ? '৳' : (formData.country === 'India' ? '₹' : '$')})
+                  </label>
                   <input
                     type="number"
                     value={formData.market_rate_salary}
@@ -313,7 +339,9 @@ export function FormSection({ onSubmit }: FormSectionProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Savings Balance ($)</label>
+                  <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">
+                    Savings Balance ({formData.country === 'Bangladesh' ? '৳' : (formData.country === 'India' ? '₹' : '$')})
+                  </label>
                   <input
                     type="number"
                     value={formData.savings_balance}
@@ -401,6 +429,69 @@ export function FormSection({ onSubmit }: FormSectionProps) {
             </motion.div>
           )}
 
+          {formData.country === 'Bangladesh' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-charcoal-800/50 p-6 rounded-lg border border-charcoal-700 space-y-8"
+            >
+              <div>
+                <h3 className="text-lg font-display font-semibold mb-6 text-lime flex items-center gap-2">
+                  <span className="w-6 h-[1px] bg-lime" />
+                  Mobile Banking (bKash/Nagad)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Idle Balance (৳)</label>
+                    <input
+                      type="number"
+                      value={formData.mobile_banking_balance || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, mobile_banking_balance: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Years Idle</label>
+                    <input
+                      type="number"
+                      value={formData.years_mobile_banking_idle || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, years_mobile_banking_idle: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-display font-semibold mb-6 text-orange flex items-center gap-2">
+                  <span className="w-6 h-[1px] bg-orange" />
+                  Missed DPS
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Monthly DPS Amount (৳)</label>
+                    <input
+                      type="number"
+                      value={formData.monthly_dps_missed || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, monthly_dps_missed: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Months Delayed</label>
+                    <input
+                      type="number"
+                      value={formData.months_dps_delayed || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, months_dps_delayed: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+
           {/* Subscriptions */}
           <div className="bg-charcoal-800/50 p-6 rounded-lg border border-charcoal-700">
             <h3 className="text-lg font-display font-semibold mb-6 text-rose flex items-center gap-2">
@@ -421,7 +512,7 @@ export function FormSection({ onSubmit }: FormSectionProps) {
                     type="number"
                     value={sub.monthly_cost}
                     onChange={(e) => updateSubscription(index, 'monthly_cost', parseFloat(e.target.value) || 0)}
-                    placeholder="$/mo"
+                    placeholder={formData.country === 'Bangladesh' ? '৳/mo' : (formData.country === 'India' ? '₹/mo' : '$/mo')}
                     className="w-28 px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
                   />
                   <input
