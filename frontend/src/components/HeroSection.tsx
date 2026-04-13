@@ -26,20 +26,6 @@ export function HeroSection() {
                         }}
                         className="max-w-5xl"
                     >
-                        {/* HeroBadge above headline */}
-                        <motion.div
-                            initial={{ opacity: 0, filter: 'blur(12px)', y: 20 }}
-                            animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
-                            transition={{
-                                delay: 0.1,
-                                duration: 1.5,
-                                bounce: 0.3
-                            }}
-                            className="mb-8"
-                        >
-                            <HeroBadge>Financial Inaction Calculator</HeroBadge>
-                        </motion.div>
-
                         {/* Main headline */}
                         <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-thin tracking-tighter text-cream mb-8 leading-none break-words whitespace-normal">
                             <motion.span
@@ -82,7 +68,7 @@ export function HeroSection() {
 
                         {/* Financial Inaction Engine Badge */}
                         <div className="flex justify-center md:justify-start mb-6">
-                            <span className="text-xs uppercase tracking-widest text-cyan-400 border border-cyan-800 px-3 py-1 rounded-full inline-block">
+                            <span className="text-xs uppercase tracking-widest text-red-500 border border-red-500/30 px-3 py-1 rounded-full inline-block">
                                 Financial Inaction Engine
                             </span>
                         </div>

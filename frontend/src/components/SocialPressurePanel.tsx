@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface SocialPressurePanelProps {
@@ -26,7 +26,7 @@ export function SocialPressurePanel({ userLoss, country, currency }: SocialPress
   // Persistent user count
   const [peopleCount, setPeopleCount] = useState<number>(seed.count)
   const [avgLoss, setAvgLoss] = useState<number>(seed.avg)
-  const [updateKey, setUpdateKey] = useState(0) // Used to trigger fade animations
+  const [_updateKey, setUpdateKey] = useState(0) // Used to trigger fade animations
 
   // Initial Load from LocalStorage
   useEffect(() => {

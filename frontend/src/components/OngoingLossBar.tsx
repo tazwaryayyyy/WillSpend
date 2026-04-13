@@ -41,7 +41,7 @@ export function OngoingLossBar({ dailyLossRate, currency, isVisible }: OngoingLo
         <span className="opacity-80">{minutesElapsed === 1 ? 'minute' : 'minutes'}</span>
       </div>
       
-      <style jsx>{`
+      <style>{`
         @media (max-width: 640px) {
           .text-sm {
             font-size: 0.75rem;

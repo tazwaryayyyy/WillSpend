@@ -120,9 +120,6 @@ npm run dev
 ## HOW THE AI ADVISOR WORKS
 The FastAPI backend receives the precise category losses computed by the regional calculation engines. This loss dictionary is formatted and injected into the Groq system prompt, anchoring the Large Language Model to the specific user telemetry. The temperature is strictly controlled. The model is commanded to emit a strictly structured JSON roadmap, ensuring deterministic parsing on the frontend. A fallback retry loop guarantees a valid JSON schema is caught and passed to the React layer, while strict exclusionary language rules block any passive advisory phrasing.
 
-## BUILT FOR
-Global Fusion Hackathon 2026, FinTech and AI track, fulfilling the mandate to provide scalable logic that works across distinct global regulatory frameworks.
-
 ## WHAT IS NEXT
 1. UK mode with ISA gap and pension contribution calculator
 2. Mobile app for Bangladesh with offline DPS calculator and bKash deep link integration
