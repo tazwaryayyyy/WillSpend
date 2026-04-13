@@ -74,7 +74,8 @@ def get_action_hint(category: str) -> str:
         "Not Investing Monthly": "start automated monthly investing",
         "401k Match Leak": "enroll in 401k up to match",
         "SIP Delay Cost": "start your SIP immediately",
-        "Debt Not Refinanced": "apply for balance transfer card"
+        "Debt Not Refinanced": "apply for balance transfer card",
+        "Sanchayapatra Missed": "apply for Sanchayapatra government bond"
     }
     
     # Handle subscription categories
@@ -91,7 +92,8 @@ def estimate_recovery_1year(total_cost: float, category: str) -> float:
         "Not Investing Monthly": 0.3,  # Only part recoverable in 1 year
         "401k Match Leak": 1.0,  # 100% recoverable by enrolling
         "SIP Delay Cost": 0.4,  # Partial recovery in 1 year
-        "Debt Not Refinanced": 0.65  # 65% via lower interest
+        "Debt Not Refinanced": 0.65,  # 65% via lower interest
+        "Sanchayapatra Missed": 0.85  # 85% recoverable by switching soon
     }
     
     if "Unused Subscription" in category:
@@ -212,6 +214,18 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
                 recovery_months=recovery_months(cost, profile.monthly_income),
                 action_hint="open a monthly DPS immediately",
                 estimated_recovery_1year=estimate_recovery_1year(cost, "SIP Delay Cost")
+            ))
+
+        if "sanchayapatra_missed_cost" in bd_metrics:
+            cost = bd_metrics["sanchayapatra_missed_cost"]
+            category = "Sanchayapatra Missed"
+            items.append(InactionItem(
+                category=category,
+                description=f"Missing out on {currency}{profile.monthly_sanchayapatra_eligible:,.0f}/mo Sanchayapatra at 11.76% return for {profile.years_sanchayapatra_missed} year(s).",
+                total_cost=cost,
+                recovery_months=recovery_months(cost, profile.monthly_income),
+                action_hint=get_action_hint(category),
+                estimated_recovery_1year=estimate_recovery_1year(cost, category)
             ))
 
     # 6. Subscriptions

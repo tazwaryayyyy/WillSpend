@@ -8,11 +8,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from pdf_generator import generate_report_pdf
-from models import UserProfile, WillSpendResponse
-from calculator import run_simulation
 from ai_advisor import generate_report
+from models import UserProfile, WillSpendResponse, AdvisorRequest
 from ai_client import get_current_ai_provider
 from cache_manager import get_cache_stats
+from calculator import run_simulation
 
 # Setup logging
 logging.basicConfig(
@@ -79,8 +79,7 @@ async def analyze(profile: UserProfile):
             logger.info(f"[{request_id}] AI report generated successfully")
         except Exception as ai_error:
             logger.error(f"[{request_id}] AI report generation failed: {str(ai_error)}")
-            # Use fallback response
-            ai_report = "Our AI is temporarily unavailable. Here's a typical insight: delaying savings by one year can cost you 6% of your principal in lost compound interest."
+            raise HTTPException(status_code=500, detail="AI Provider is temporarily unavailable. Please try again.")
         
         logger.info(f"[{request_id}] Analysis completed successfully")
         return WillSpendResponse(simulation=simulation, ai_report=ai_report)
@@ -93,6 +92,26 @@ async def analyze(profile: UserProfile):
         logger.error(f"[{request_id}] {error_msg}")
         logger.error(f"[{request_id}] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
+
+
+@app.post("/advisor")
+async def advisor_endpoint(request: AdvisorRequest):
+    """
+    Dedicated endpoint for the AI Advisor using anchored category losses.
+    """
+    request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_advisor"
+    logger.info(f"[{request_id}] AI Advisor request received for {request.profile.country}")
+    
+    try:
+        report = generate_report(
+            simulation=request.simulation, 
+            profile=request.profile, 
+            category_losses=request.category_losses
+        )
+        return {"report": report}
+    except Exception as e:
+        logger.error(f"[{request_id}] AI Advisor failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="AI Advisor failed to generate advice.")
 
 
 @app.get("/health")
@@ -225,16 +244,7 @@ if os.path.exists(FRONTEND_PATH):
 
 
 @app.get("/")
-async def root():
-    """
-    Health check for Render.
-    """
-    return {
-        "status": "active",
-        "service": "WillSpend API",
-        "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
-    }
+def health(): return {"status": "ok"}
 
 
 # Optional: Keep the static serving if needed for local testing

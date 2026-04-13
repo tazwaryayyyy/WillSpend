@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Timer, AlertTriangle, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Timer, ArrowRight } from 'lucide-react'
+import { ActionSimulationEngine } from './ActionSimulationEngine'
 
 interface ForceActionSystemProps {
   totalCost: number
@@ -106,7 +107,7 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
         case 'debt_cost':
           return {
             title: "Call your bank today about refinancing",
-            impact: "One 10-minute negotiation could stop the interest bleed on your current balance."
+            impact: "One 10-minute negotiation stops the interest bleed on your current balance."
           }
         case 'match_miss_cost':
           return {
@@ -173,6 +174,10 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
         ))}
       </div>
 
+      <div className="text-sm text-center text-emerald-400 font-medium mb-4">
+        Users who act within 24 hours reduce projected loss by up to 30%.
+      </div>
+
       <div className="relative">
         <motion.button
           onClick={handleCommit}
@@ -211,7 +216,7 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
                     If you don't start today, you will lose an additional {currency}{(dailyLossRate * 7).toFixed(2)} this week alone.
                   </p>
                   <p className="text-emerald-500 font-bold text-xl">
-                    If you start today, you could recover {currency}{(totalCost * 0.15).toLocaleString()} within 3 months.
+                    If you start today, you will recover {currency}{(totalCost * 0.15).toLocaleString()} within 3 months.
                   </p>
                 </div>
                 
@@ -220,14 +225,22 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
                     <Timer className="w-4 h-4" />
                     Your commitment expires in
                   </div>
-                  <div className="text-5xl font-display font-black text-white tabular-nums">
-                    {formatTime(timeLeft)}
+                    <div className="text-5xl font-display font-black text-white tabular-nums">
+                      {formatTime(timeLeft)}
+                    </div>
                   </div>
+
+                  <ActionSimulationEngine 
+                    totalCost={totalCost}
+                    dailyLossRate={dailyLossRate}
+                    currency={currency}
+                    country={country}
+                    steps={steps}
+                  />
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
       </div>
     </div>
   )

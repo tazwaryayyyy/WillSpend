@@ -17,19 +17,19 @@ class Debt(BaseModel):
 
 
 class UserProfile(BaseModel):
-    age: int
-    monthly_income: float
-    current_salary: float
-    market_rate_salary: float          # what they could be earning
-    years_at_same_salary: int
+    age: Optional[int] = None
+    monthly_income: Optional[float] = None
+    current_salary: Optional[float] = None
+    market_rate_salary: Optional[float] = None
+    years_at_same_salary: Optional[int] = None
 
-    savings_balance: float
-    current_savings_rate: float        # in % e.g. 0.5
-    high_yield_savings_rate: float     # in % e.g. 4.5
-    years_savings_idle: int
+    savings_balance: Optional[float] = None
+    current_savings_rate: Optional[float] = None
+    high_yield_savings_rate: Optional[float] = None
+    years_savings_idle: Optional[int] = None
 
-    monthly_investment_missed: float   # amount they could have invested per month
-    years_not_investing: int
+    monthly_investment_missed: Optional[float] = None
+    years_not_investing: Optional[int] = None
 
     subscriptions: List[Subscription]
     debts: List[Debt]
@@ -51,6 +51,8 @@ class UserProfile(BaseModel):
     years_mobile_banking_idle: Optional[int] = 0
     monthly_dps_missed: Optional[float] = 0.0
     months_dps_delayed: Optional[int] = 0
+    monthly_sanchayapatra_eligible: Optional[float] = 0.0
+    years_sanchayapatra_missed: Optional[int] = 0
 
 
 
@@ -72,3 +74,9 @@ class SimulationResult(BaseModel):
 class WillSpendResponse(BaseModel):
     simulation: SimulationResult
     ai_report: str
+
+
+class AdvisorRequest(BaseModel):
+    profile: UserProfile
+    simulation: SimulationResult
+    category_losses: Optional[Dict[str, float]] = None

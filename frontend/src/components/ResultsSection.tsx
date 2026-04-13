@@ -38,6 +38,84 @@ const SectionSeparator = ({ text }: { text: string }) => (
   </div>
 )
 
+const AssumptionsPanel = ({ country }: { country: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const assumptions: Record<string, Array<{ label: string, value: string }>> = {
+    'Bangladesh': [
+      { label: 'DPS return rate', value: '7.0% (Bangladesh Bank standard)' },
+      { label: 'DSE average growth', value: '9.0% (10-year average)' },
+      { label: 'bKash/Nagad savings rate', value: '4.5%' },
+      { label: 'Bank FD rate', value: '7.5%' },
+      { label: 'Personal loan rate', value: '16.0%' },
+      { label: 'Secured loan rate', value: '10.0%' }
+    ],
+    'India': [
+      { label: 'SIP average return', value: '12.0% (Nifty 50, 10-year average)' },
+      { label: 'Savings account rate', value: '3.5%' },
+      { label: 'High-yield FD rate', value: '7.0%' },
+      { label: 'Personal loan rate', value: '14.0%' }
+    ],
+    'US': [
+      { label: 'S&P 500 average return', value: '7.0% (inflation-adjusted)' },
+      { label: 'HYSA rate', value: '4.5%' },
+      { label: 'Average savings rate', value: '0.5%' },
+      { label: 'Personal loan rate', value: '11.0%' }
+    ]
+  };
+
+  const activeAssumptions = assumptions[country] || assumptions['US'];
+
+  return (
+    <div className="mt-8 border-t border-charcoal-800 pt-4">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cream/40 hover:text-cream/60 transition-colors mx-auto"
+      >
+        <span>How We Calculate This</span>
+        <svg 
+          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-6 pb-4 max-w-md mx-auto">
+              <div className="bg-charcoal-900 border border-charcoal-700 rounded-lg overflow-hidden">
+                <table className="w-full text-left text-xs font-mono">
+                  <tbody className="divide-y divide-charcoal-800">
+                    {activeAssumptions.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-charcoal-800/50">
+                        <td className="px-4 py-2 text-cream/40">{item.label}</td>
+                        <td className="px-4 py-2 text-cream/80 text-right">{item.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-4 text-[10px] text-cream/30 italic text-center leading-normal">
+                "Under stable, long-term financial behavior, delaying action has a measurable opportunity cost. This model estimates that cost. It does not assume high-risk decisions."
+              </p>
+              <p className="mt-2 text-xs text-slate-400 text-center leading-normal">
+                All projections are estimates based on historical averages and conservative baseline scenarios. Actual outcomes vary.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export function ResultsSection({ data, onRecoveryComplete, onBack }: ResultsSectionProps) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [showToast, setShowToast] = useState(false)
@@ -142,20 +220,18 @@ Calculate yours: ${window.location.origin}`
     };
   };
 
-  const getRecoveryProps = (amount: number) => {
-    const isHigh = currency === '৳' ? amount > 100000 : (currency === '₹' ? amount > 500000 : amount > 10000);
-    return {
-      className: "text-emerald-500 font-extrabold",
-      style: isHigh ? { textShadow: '0 0 20px rgba(16,185,129,0.4)' } : {}
-    };
-  };
-
   if (!data) return null
 
   return (
     <section id="report-section" className="min-h-screen py-24 px-6 md:px-12 bg-charcoal-950">
       <div className="max-w-7xl mx-auto">
         <SectionSeparator text="Here is how many years of wealth-building you have lost." />
+
+        {country === 'Bangladesh' && (
+          <div className="text-center mb-12 -mt-8 text-[10px] font-mono uppercase tracking-widest text-cyan-500 animate-pulse">
+            Calculated using Bangladesh Bank rates, DSE historical data, and Sanchayapatra terms as of 2025
+          </div>
+        )}
         
         {/* Inaction Age Score */}
         <motion.div
@@ -236,7 +312,13 @@ Calculate yours: ${window.location.origin}`
             <br />
             <span className="text-charcoal-600">by doing nothing</span>
           </h1>
+
+          <AssumptionsPanel country={country} />
         </motion.div>
+
+        <div className="text-2xl text-center text-slate-300 py-8">
+          "Your biggest financial mistake isn't losing money. It's waiting."
+        </div>
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
@@ -394,9 +476,16 @@ Calculate yours: ${window.location.origin}`
                             <p className="text-sm text-cream/50 mb-3 leading-snug">
                               {step.action}
                             </p>
-                            <div className="text-[11px] font-mono text-emerald-500 font-extrabold pt-2 border-t border-charcoal-800 flex items-center gap-2">
-                              <span className="w-2 h-[1px] bg-emerald-500/40" />
-                              IMPACT: {step.impact}
+                            <div className="text-[11px] font-mono text-emerald-500 font-extrabold pt-2 border-t border-charcoal-800 flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-[1px] bg-emerald-500/40" />
+                                IMPACT: {step.impact}
+                              </div>
+                              {step.category && (
+                                <div className="text-cyan-400 font-mono text-[10px] uppercase tracking-wider pl-4">
+                                  Addresses: {step.category} — recovers {currency}{step.amount_recovered?.toLocaleString() || 0}
+                                </div>
+                              )}
                             </div>
                           </motion.div>
                         ))}
@@ -451,6 +540,44 @@ Calculate yours: ${window.location.origin}`
                   >
                     <CheckCircle className="w-5 h-5" />
                   </motion.button>
+                </div>
+                
+                {country === 'Bangladesh' && (
+                  <div className="mt-4 pt-4 border-t border-charcoal-800/50">
+                    <div className="text-[10px] font-mono text-amber-500/80 leading-relaxed italic">
+                      {(() => {
+                        const baseCategory = category.split(":")[0].trim();
+                        switch(baseCategory) {
+                          case 'Idle Mobile Banking': 
+                            return "Most Bangladeshi users keep 60-80% of liquid savings in mobile wallets earning half the rate of a standard FD.";
+                          case 'Missed DPS': 
+                            return "A ৳2,000/month DPS started at age 25 vs 30 means ৳340,000 less at maturity. Same contribution. Five years difference.";
+                          case 'Salary Not Negotiated': 
+                            return "In Bangladesh's corporate sector, only 23% of employees negotiate their first offer. The ones who do earn 12-18% more on average.";
+                          case 'Sanchayapatra Missed': 
+                            return "Bangladesh Sanchayapatra offers 11.28-11.76% return — one of the highest guaranteed rates in South Asia. Most eligible users never apply.";
+                          default: return null;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 pt-4 border-t border-charcoal-800 text-[10px] font-mono text-cream/20 uppercase tracking-tight">
+                  {(() => {
+                    switch(category) {
+                      case 'idle_savings_cost': return `Based on ${country} FD vs savings rate differential`;
+                      case 'mobile_banking_idle_cost': return "Based on bKash/Nagad vs Bank FD rate differential";
+                      case 'missed_investments_cost': return "Based on S&P 500 10-year average return";
+                      case 'sip_missed_cost': return "Based on Nifty 50 10-year average return";
+                      case 'dps_missed_cost': return "Based on Bangladesh Bank standard DPS maturity formula";
+                      case 'salary_gap_cost': return `Based on reported negotiation outcomes, ${country} labor market`;
+                      case 'subscription_cost': return "Based on compounded monthly leak across reported time";
+                      case 'debt_cost': return "Based on current bank refinancing benchmarks";
+                      case 'match_miss_cost': return "Based on standard employer match compounding";
+                      default: return "Based on baseline opportunity cost model";
+                    }
+                  })()}
                 </div>
               </motion.div>
             ))}

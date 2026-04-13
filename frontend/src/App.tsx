@@ -8,6 +8,7 @@ import { ResultsSection } from '@/components/ResultsSection'
 import { RecoveryTracker } from '@/components/RecoveryTracker'
 import { Navigation } from '@/components/Navigation'
 import { FullScreenIntro } from '@/components/FullScreenIntro'
+import { OngoingLossBar } from '@/components/OngoingLossBar'
 
 export function CustomCursor() {
   const mouseX = useMotionValue(-100)
@@ -47,6 +48,12 @@ function App() {
       setRecoveryActions(JSON.parse(stored))
     }
   }, [])
+
+  const dailyLossRate = analysisData?.simulation?.total_inaction_cost 
+    ? analysisData.simulation.total_inaction_cost / ((analysisData.profile?.years_at_same_salary || 1) * 365)
+    : 0
+
+  const currency = analysisData?.profile?.country === 'Bangladesh' ? '৳' : (analysisData?.profile?.country === 'India' ? '₹' : '$')
 
   return (
     <div className="min-h-screen bg-charcoal-950 text-cream font-display">
@@ -96,6 +103,12 @@ function App() {
           </>
         )}
       </main>
+
+      <OngoingLossBar 
+        isVisible={showResults && analysisData !== null} 
+        dailyLossRate={dailyLossRate} 
+        currency={currency} 
+      />
     </div>
   )
 }

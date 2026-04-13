@@ -80,6 +80,13 @@ export function HeroSection() {
                             </motion.span>
                         </h1>
 
+                        {/* Financial Inaction Engine Badge */}
+                        <div className="flex justify-center md:justify-start mb-6">
+                            <span className="text-xs uppercase tracking-widest text-cyan-400 border border-cyan-800 px-3 py-1 rounded-full inline-block">
+                                Financial Inaction Engine
+                            </span>
+                        </div>
+
                         {/* AnimatedShinyText for subheadline */}
                         <motion.div
                             initial={{ opacity: 0, filter: 'blur(12px)', y: 20 }}

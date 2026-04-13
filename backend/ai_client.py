@@ -56,9 +56,8 @@ def retry_with_backoff(func, max_retries: int = 3, base_delay: float = 1.0):
 
 def call_groq_api(prompt: str) -> str:
     """Call Groq API."""
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY environment variable is required")
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key: raise ValueError("GROQ_API_KEY not set")
     
     client = Groq(api_key=api_key)
     
@@ -100,11 +99,7 @@ def get_ai_response(prompt: str, context: str = "") -> str:
         return response
         
     except Exception as e:
-        logger.error(f"AI provider error: {str(e)}")
-        
-        # Fallback response
-        fallback = "Our AI is temporarily unavailable. Here's a typical insight: delaying savings by one year can cost you 6% of your principal in lost compound interest."
-        return fallback
+        raise Exception(f"AI Provider error: {str(e)}")
 
 def get_current_ai_provider() -> str:
     """Get the currently configured AI provider."""

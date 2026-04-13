@@ -8,60 +8,63 @@ load_dotenv()
 
 
 @cached_ai_call(ttl_seconds=300)
-def generate_report(simulation: SimulationResult, profile: UserProfile) -> str:
+def generate_report(simulation: SimulationResult, profile: UserProfile, category_losses: dict = None) -> str:
     currency = "৳" if profile.country == "Bangladesh" else ("₹" if profile.country == "India" else "$")
     
-    items_text = "\n".join([
-        f"- {item.category}: {currency}{item.total_cost:,.2f} lost | Recovery: ~{item.recovery_months} months"
-        for item in simulation.items
-    ])
+    # Format category losses for the prompt
+    if category_losses:
+        losses_formatted = "\n".join([f"- {cat}: {currency}{amt:,.2f}" for cat, amt in category_losses.items()])
+    else:
+        # Fallback to simulation items if dict not provided
+        losses_formatted = "\n".join([
+            f"- {item.category}: {currency}{item.total_cost:,.2f}"
+            for item in simulation.items
+        ])
 
     location_context = f"based in {profile.city}, {profile.country}" if profile.city else f"based in {profile.country}"
     
-    bd_context = ""
-    if profile.country == "Bangladesh":
-        bd_context = """
-        Additional Context for Bangladesh:
-        - Currency: BDT (৳)
-        - Reference points: "৳50,000 is roughly one month rent in Dhaka", "৳1,000,000 is a down payment on a flat in Chattogram"
-        - Mention bKash, Nagad, DPS, and Bangladesh Bank FD rates naturally in the advice.
-        - Recovery roadmap should reference locally available products like DPS, FDR, and Sanchayapatra.
-        """
+    localization_context = {
+        'Bangladesh': "৳50,000 = roughly one month rent in Dhaka",
+        'India': "₹50,000 = roughly two months groceries for a family of 4",
+        'US': "$10,000 = roughly 3 months emergency fund"
+    }.get(profile.country, "$10,000 = roughly 3 months emergency fund")
 
-    prompt = f"""You are a brutally honest but empathetic financial advisor.
-    
-A {profile.age}-year-old with a monthly income of {currency}{profile.monthly_income:,.0f} {location_context} has just run a Cost of Inaction analysis. Here are the results:
+    prompt = f"""You are a direct, no-nonsense financial recovery advisor. You have access to the user's exact calculated losses by category. Every recommendation you make must reference a specific number from their data. Never give generic advice.
 
-Total money lost due to financial inaction: {currency}{simulation.total_inaction_cost:,.2f}
+The user's losses are:
+{losses_formatted}
 
-Breakdown:
-{items_text}
+Rules:
+1. Open with their single biggest loss category and its exact amount
+2. Structure your response as ranked priorities — biggest loss first
+3. For each category give ONE specific action with ONE specific number (minimum contribution, exact account type, exact rate available to them)
+4. Never say "consider", "might", "could" — use direct commands
+5. Enforce these exact replacements in your language:
+   - "consider starting" -> "Start"
+   - "consider opening" -> "Open"
+   - "you might benefit from" -> "This gives you"
+   - "could help you" -> "This stops"
+   - "you may want to" -> "Do this:"
+   - "you should consider" -> "Do this:"
+   - "it may be worth" -> "This is worth"
+   - "try to" -> (delete it)
+   - "you could" -> "You can"
+   - "might want to" -> (use a direct command)
+6. Reference {profile.country} specific products only (DPS, bKash, SIP, HYSA, 401k — whatever applies)
+7. Return the roadmap in <roadmap> tags as JSON:
+   [{"{"}"week": 1, "title": "", "action": "", "impact": "", "category": "", "amount_recovered": 0{"}"}]
+8. Keep the summary paragraph under 4 sentences
+9. Never use the words: innovative, seamless, powerful, leverage, robust
 
-{bd_context}
+Loss context for localization:
+{localization_context}
 
-Write a structured report with these 3 specific sections:
+User is {profile.age} years old and {location_context}. Total loss: {currency}{simulation.total_inaction_cost:,.2f}
 
-1. THE DAMAGE — A 3-4 sentence plain-English summary of what their inaction has truly cost them. 
-
-2. REGRET STORIES — For their #1 biggest inaction item, tell a "Regret Story". Translate that dollar amount into real-world terms relative to their location ({profile.city}, {profile.country}). For example, "That {currency}42,000 would have been a down payment on a 2-bedroom in Austin, Texas" or "That's 5 years of private school tuition in Mumbai." Make it hit hard.
-
-3. RECOVERY ROADMAP — Provide a recovery roadmap in JSON format wrapped inside <roadmap> tags.
-
-Format the roadmap JSON EXACTLY like this (nothing else after the tag):
-<roadmap>
-[
-  {"week": 1, "title": "...", "action": "...", "impact": "..."},
-  {"week": 2, "title": "...", "action": "...", "impact": "..."},
-  {"month": 1, "title": "...", "action": "...", "impact": "..."},
-  {"year": 1, "title": "...", "action": "...", "impact": "..."}
-]
-</roadmap>
-
-Keep the total response (including JSON) under 500 words. Use markdown headings (##) for sections 1 and 2."""
-
+Write the summary paragraph first, followed by the roadmap JSON."""
 
     try:
         response = get_ai_response(prompt, f"simulation_{simulation.total_inaction_cost}_profile_{profile.age}_{profile.country}")
         return response
     except Exception as e:
-        return f"The AI Advisor is currently offline due to a connection error. However, your data is visible above. (Error: {str(e)})"
+        raise Exception(f"AI Advisor processing failed: {str(e)}")

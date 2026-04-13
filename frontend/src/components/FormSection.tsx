@@ -29,6 +29,8 @@ interface FormData {
   years_mobile_banking_idle?: number
   monthly_dps_missed?: number
   months_dps_delayed?: number
+  monthly_sanchayapatra_eligible?: number
+  years_sanchayapatra_missed?: number
   subscriptions: Array<{ name: string; monthly_cost: number; months_active: number }>
   debts: Array<{ name: string; balance: number; current_rate: number; refinance_rate: number; years: number }>
 }
@@ -62,6 +64,8 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
     years_mobile_banking_idle: 0,
     monthly_dps_missed: 0,
     months_dps_delayed: 0,
+    monthly_sanchayapatra_eligible: 0,
+    years_sanchayapatra_missed: 0,
     subscriptions: [{ name: 'Netflix', monthly_cost: 15.99, months_active: 12 }],
     debts: [{ name: 'Credit Card', balance: 5000, current_rate: 18.9, refinance_rate: 12.9, years: 3 }],
   })
@@ -104,6 +108,10 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
         if (formData.monthly_dps_missed && formData.months_dps_delayed) {
           const dpsLoss = formData.monthly_dps_missed * formData.months_dps_delayed * 1.2
           totalLoss += dpsLoss
+        }
+        if (formData.monthly_sanchayapatra_eligible && formData.years_sanchayapatra_missed) {
+          const sLoss = formData.monthly_sanchayapatra_eligible * 12 * formData.years_sanchayapatra_missed * (0.1176 - 0.075)
+          totalLoss += sLoss
         }
       }
 
@@ -182,7 +190,24 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
 
     try {
       const response = await apiClient.post('/api/analyze', formData)
-      onSubmit(response.data)
+      const simulation = response.data.simulation
+      
+      // Calculate category losses for the advisor
+      const category_losses = Object.fromEntries(
+        Object.entries(simulation.categories).map(([k, v]: [string, any]) => [k, v.amount])
+      )
+
+      // Call the new anchored advisor endpoint
+      const advisorResponse = await apiClient.post('/api/advisor', {
+        profile: formData,
+        simulation: simulation,
+        category_losses
+      })
+
+      onSubmit({ 
+        ...response.data, 
+        ai_report: advisorResponse.data.report 
+      })
     } catch (error) {
       console.error('Analysis failed:', error)
       alert("Failed to analyze your data. Please check your connection and try again.")
@@ -488,6 +513,33 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
                       type="number"
                       value={formData.months_dps_delayed || 0}
                       onChange={(e) => setFormData(prev => ({ ...prev, months_dps_delayed: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-display font-semibold mb-6 text-emerald-500 flex items-center gap-2">
+                  <span className="w-6 h-[1px] bg-emerald-500" />
+                  Sanchayapatra Missed
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Monthly Amount Eligible (৳)</label>
+                    <input
+                      type="number"
+                      value={formData.monthly_sanchayapatra_eligible || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, monthly_sanchayapatra_eligible: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-cream/50 mb-2">Years Missed</label>
+                    <input
+                      type="number"
+                      value={formData.years_sanchayapatra_missed || 0}
+                      onChange={(e) => setFormData(prev => ({ ...prev, years_sanchayapatra_missed: parseInt(e.target.value) || 0 }))}
                       className="w-full px-4 py-3 bg-charcoal-950 border border-charcoal-700 rounded text-cream focus:border-lime focus:outline-none transition-colors"
                     />
                   </div>

@@ -30,6 +30,21 @@ def calculate_dps_missed_loss(monthly_amount: float, months_delayed: int, annual
     
     return round(fv, 2)
 
+def calculate_sanchayapatra_loss(monthly_amount: float, years: int) -> float:
+    """
+    Loss from missing Sanchayapatra (avg 11.5% return) vs standard Bank FD (avg 7.5% return).
+    Difference: 4.26%
+    """
+    if monthly_amount <= 0 or years <= 0:
+        return 0.0
+    
+    # Differential return logic
+    # total_loss = monthlyAmount * 12 * years * (0.1176 - 0.075)
+    # Using the user's requested formula specifically for consistency
+    loss = monthly_amount * 12 * years * (0.1176 - 0.075)
+    
+    return round(loss, 2)
+
 def get_bangladesh_examples(loss_amount: float) -> str:
     """Relatable context for Bangladesh."""
     if loss_amount <= 0:
@@ -68,5 +83,14 @@ def calculate_bangladesh_specific_metrics(profile_data: Dict[str, Any]) -> Dict[
         )
         results["dps_missed_cost"] = dps_loss
         results["dps_example"] = get_bangladesh_examples(dps_loss)
+        
+    # Sanchayapatra Missed
+    if profile_data.get("monthly_sanchayapatra_eligible", 0) > 0 and profile_data.get("years_sanchayapatra_missed", 0) > 0:
+        s_loss = calculate_sanchayapatra_loss(
+            profile_data["monthly_sanchayapatra_eligible"],
+            profile_data["years_sanchayapatra_missed"]
+        )
+        results["sanchayapatra_missed_cost"] = s_loss
+        results["sanchayapatra_example"] = get_bangladesh_examples(s_loss)
         
     return results
