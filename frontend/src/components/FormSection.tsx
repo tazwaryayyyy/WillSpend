@@ -35,9 +35,10 @@ interface FormData {
 
 interface FormSectionProps {
   onSubmit: (data: any) => void
+  startingTickerValue?: number
 }
 
-export function FormSection({ onSubmit }: FormSectionProps) {
+export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionProps) {
   const [formData, setFormData] = useState<FormData>({
     age: 28,
     monthly_income: 3500,
@@ -236,7 +237,11 @@ export function FormSection({ onSubmit }: FormSectionProps) {
           </motion.p>
         </div>
 
-        <LiveLossTicker targetValue={liveLoss} country={formData.country} />
+        <LiveLossTicker 
+          targetValue={liveLoss} 
+          country={formData.country} 
+          startingValue={startingTickerValue}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -54,7 +54,7 @@ export function RecoveryChart({ totalLoss, country, currency }: RecoveryChartPro
       {
         label: 'Do Nothing',
         data: doNothingData,
-        borderColor: '#f43f5e', // rose-500
+        borderColor: '#ef4444', // red-500
         backgroundColor: 'transparent',
         borderWidth: 2,
         pointRadius: 0,
@@ -65,14 +65,14 @@ export function RecoveryChart({ totalLoss, country, currency }: RecoveryChartPro
       {
         label: 'Follow the Plan',
         data: followPlanData,
-        borderColor: '#22d3ee', // cyan-400
+        borderColor: '#10b981', // emerald-500
         backgroundColor: (context) => {
           const chart = context.chart
           const { ctx, chartArea } = chart
           if (!chartArea) return 'transparent'
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-          gradient.addColorStop(0, 'rgba(34, 211, 238, 0.1)')
-          gradient.addColorStop(1, 'rgba(34, 211, 238, 0)')
+          gradient.addColorStop(0, 'rgba(16, 185, 129, 0.1)')
+          gradient.addColorStop(1, 'rgba(16, 185, 129, 0)')
           return gradient
         },
         borderWidth: 2,
@@ -85,7 +85,7 @@ export function RecoveryChart({ totalLoss, country, currency }: RecoveryChartPro
         label: 'Your Recovery Zone',
         data: doNothingData, // Top line of the zone
         borderColor: 'transparent',
-        backgroundColor: 'rgba(34, 197, 94, 0.05)', // green-500 0.05
+        backgroundColor: 'rgba(16, 185, 129, 0.05)', // emerald-500 0.05
         fill: 1, // Fill to the "Follow the Plan" dataset (index 1)
         pointRadius: 0,
         pointHoverRadius: 0,

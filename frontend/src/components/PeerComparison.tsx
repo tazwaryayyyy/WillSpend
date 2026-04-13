@@ -53,12 +53,12 @@ export function PeerComparison({ userLoss, country }: PeerComparisonProps) {
       {
         data: [medianLoss, userLoss],
         backgroundColor: [
-          'rgba(34, 211, 238, 0.8)', // Cyan-400
-          'rgba(244, 63, 94, 0.8)'   // Rose-500
+          'rgba(148, 163, 184, 0.8)', // slate-400
+          isBetterThanAverage ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)' // emerald-500 or red-500
         ],
         borderColor: [
-          'rgb(34, 211, 238)',
-          'rgb(244, 63, 94)'
+          'rgb(148, 163, 184)',
+          isBetterThanAverage ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
         ],
         borderWidth: 1,
         borderRadius: 4,
@@ -90,7 +90,8 @@ export function PeerComparison({ userLoss, country }: PeerComparisonProps) {
           color: 'rgba(255, 255, 255, 0.05)'
         },
         ticks: {
-          color: 'rgba(255, 255, 255, 0.4)',
+          color: '#94a3b8',
+          font: { weight: 'bold' as any },
           callback: (value) => {
             return new Intl.NumberFormat('en-US', {
               notation: 'compact',
@@ -106,10 +107,11 @@ export function PeerComparison({ userLoss, country }: PeerComparisonProps) {
           display: false
         },
         ticks: {
-          color: 'rgba(255, 255, 255, 0.8)',
+          color: '#94a3b8',
           font: {
             family: 'Geist Mono',
-            size: 11
+            size: 11,
+            weight: 'bold' as any
           }
         }
       }
@@ -131,7 +133,7 @@ export function PeerComparison({ userLoss, country }: PeerComparisonProps) {
           <h3 className="text-2xl font-display font-bold text-cream mb-2">
             How your inaction compares
           </h3>
-          <p className={`text-sm font-medium ${isBetterThanAverage ? 'text-lime' : 'text-rose-400'}`}>
+          <p className={`text-sm font-extrabold ${isBetterThanAverage ? 'text-emerald-500' : 'text-red-500'}`}>
             {isBetterThanAverage 
               ? "You're doing better than average — here's how to widen the gap"
               : "You're above average — here's your recovery plan"}
@@ -148,8 +150,8 @@ export function PeerComparison({ userLoss, country }: PeerComparisonProps) {
               onClick={() => setAgeBracket(bracket)}
               className={`px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded transition-all ${
                 ageBracket === bracket 
-                  ? 'bg-charcoal-700 text-cream shadow-lg' 
-                  : 'text-cream/30 hover:text-cream/60'
+                  ? 'bg-charcoal-700 text-slate-300 font-semibold shadow-lg' 
+                  : 'text-slate-400 font-semibold hover:text-slate-300'
               }`}
             >
               {bracket}

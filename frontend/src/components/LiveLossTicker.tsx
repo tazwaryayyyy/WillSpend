@@ -6,10 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 interface LiveLossTickerProps {
   targetValue: number
   country: string
+  startingValue?: number
 }
 
-export function LiveLossTicker({ targetValue, country }: LiveLossTickerProps) {
-  const [displayValue, setDisplayValue] = useState(0)
+export function LiveLossTicker({ targetValue, country, startingValue = 0 }: LiveLossTickerProps) {
+  const [displayValue, setDisplayValue] = useState(startingValue)
   const [isPulsing, setIsPulsing] = useState(false)
   const [isLive, setIsLive] = useState(false) // Whether real data is being shown
   const intervalRef = useRef<any>(null)

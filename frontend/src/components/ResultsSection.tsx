@@ -9,6 +9,8 @@ import { parseAiReport } from '@/lib/utils'
 import { PeerComparison } from './PeerComparison'
 import { DelaySlider } from './DelaySlider'
 import { RecoveryChart } from './RecoveryChart'
+import { ForceActionSystem } from './ForceActionSystem'
+import { SocialPressurePanel } from './SocialPressurePanel'
 
 interface ResultsSectionProps {
   data: any
@@ -29,6 +31,12 @@ const itemVariants = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0 }
 }
+
+const SectionSeparator = ({ text }: { text: string }) => (
+  <div className="w-full bg-[#1E293B] text-slate-300 text-center py-4 text-sm tracking-widest uppercase my-12">
+    {text}
+  </div>
+)
 
 export function ResultsSection({ data, onRecoveryComplete, onBack }: ResultsSectionProps) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
@@ -126,13 +134,29 @@ Calculate yours: ${window.location.origin}`
     return controls.stop
   }, [targetAge])
 
-  const ageColor = targetAge < 2 ? 'text-amber-500' : (targetAge <= 5 ? 'text-orange-500' : 'text-rose-500')
+  const getLossProps = (amount: number) => {
+    const isHigh = currency === '৳' ? amount > 100000 : (currency === '₹' ? amount > 500000 : amount > 10000);
+    return {
+      className: "text-red-500 font-extrabold",
+      style: isHigh ? { textShadow: '0 0 20px rgba(239,68,68,0.4)' } : {}
+    };
+  };
+
+  const getRecoveryProps = (amount: number) => {
+    const isHigh = currency === '৳' ? amount > 100000 : (currency === '₹' ? amount > 500000 : amount > 10000);
+    return {
+      className: "text-emerald-500 font-extrabold",
+      style: isHigh ? { textShadow: '0 0 20px rgba(16,185,129,0.4)' } : {}
+    };
+  };
 
   if (!data) return null
 
   return (
     <section id="report-section" className="min-h-screen py-24 px-6 md:px-12 bg-charcoal-950">
       <div className="max-w-7xl mx-auto">
+        <SectionSeparator text="Here is how many years of wealth-building you have lost." />
+        
         {/* Inaction Age Score */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -146,12 +170,12 @@ Calculate yours: ${window.location.origin}`
           
           <div className="flex flex-col items-center justify-center">
             <motion.div 
-              className={`text-8xl md:text-9xl font-display font-black leading-none mb-4 ${ageColor}`}
+              className="text-6xl md:text-8xl font-display font-extrabold leading-none mb-4 text-red-500"
             >
               {rounded}
             </motion.div>
             <h2 className="text-2xl md:text-3xl font-display font-bold text-cream mb-2">
-              Your financial inaction has set you back <span className={ageColor}>{targetAge}</span> years
+              Your financial inaction has set you back <span className="text-red-500 font-extrabold">{targetAge}</span> years
             </h2>
             <p className="text-cream/50 text-lg mb-4">
               That&apos;s {targetAge} years of wealth-building time you can recover
@@ -161,12 +185,27 @@ Calculate yours: ${window.location.origin}`
             </div>
           </div>
         </motion.div>
+
+        <ForceActionSystem 
+          totalCost={totalCost} 
+          categories={categories} 
+          country={country} 
+          currency={currency} 
+          yearsAtSameSalary={data.profile?.years_at_same_salary || 1}
+          subscriptionsCount={data.profile?.subscriptions?.length || 3}
+        />
         
+        <SectionSeparator text="Here is what happens if you wait even longer." />
         <DelaySlider totalLoss={totalCost} country={country} currency={currency} />
         
+        <SectionSeparator text="Here is what starting today actually looks like." />
         <RecoveryChart totalLoss={totalCost} country={country} currency={currency} />
 
         <PeerComparison userLoss={totalCost} country={country} />
+        
+        <SocialPressurePanel userLoss={totalCost} country={country} currency={currency} />
+        
+        <SectionSeparator text="Here is what you do about it." />
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -189,9 +228,9 @@ Calculate yours: ${window.location.origin}`
             </span>
           </div>
 
-          <h1 className="text-display text-5xl md:text-7xl lg:text-8xl text-cream mb-6">
+          <h1 className="text-display text-5xl md:text-7xl text-cream mb-6">
             You threw away{' '}
-            <span className="gradient-text">
+            <span {...getLossProps(totalCost)}>
               {currency}{totalCost.toLocaleString()}
             </span>
             <br />
@@ -217,7 +256,7 @@ Calculate yours: ${window.location.origin}`
               <div className="text-xs font-mono uppercase tracking-[0.2em] text-cream/40 mb-4">
                 Total Inaction Cost
               </div>
-              <div className="text-6xl md:text-7xl font-display font-bold gradient-text">
+              <div {...getLossProps(totalCost)} className={`${getLossProps(totalCost).className} text-5xl md:text-7xl font-display`}>
                 {currency}{totalCost.toLocaleString()}
               </div>
               <div className="mt-4 text-cream/50 text-sm">
@@ -241,7 +280,7 @@ Calculate yours: ${window.location.origin}`
               <div className="text-xs font-mono uppercase tracking-[0.2em] text-cream/40 mb-4">
                 Daily Loss
               </div>
-              <div className="text-4xl font-display font-bold text-rose">
+              <div className="text-2xl font-display font-extrabold text-red-500">
                 {currency}{Math.round(totalCost / 365).toLocaleString()}
               </div>
               <div className="mt-2 text-cream/50 text-sm">
@@ -265,7 +304,7 @@ Calculate yours: ${window.location.origin}`
               <div className="text-xs font-mono uppercase tracking-[0.2em] text-cream/40 mb-4">
                 Recovery Time
               </div>
-              <div className="text-4xl font-display font-bold text-lime">
+              <div className="text-2xl font-display font-extrabold text-emerald-500">
                 8.3
               </div>
               <div className="mt-2 text-cream/50 text-sm">
@@ -292,7 +331,7 @@ Calculate yours: ${window.location.origin}`
               </div>
               <p className="text-lg text-cream/80 leading-relaxed">
                 If you had acted {data.profile?.years_at_same_salary || 0} year(s) ago, your net worth would be approximately{' '}
-                <span className="text-lime font-semibold">
+                <span className="text-emerald-500 font-extrabold">
                   {currency}{(totalCost * 1.25).toLocaleString()}
                 </span>{' '}
                 higher today.
@@ -314,11 +353,11 @@ Calculate yours: ${window.location.origin}`
           >
             <SpotlightCard className="p-8">
               <div className="flex items-center gap-3 mb-6">
-                <div className="text-xs font-mono uppercase tracking-[0.2em] text-lime">
+                <div className="text-xs font-mono uppercase tracking-[0.2em] text-emerald-500">
                   AI Advisor Insights
                 </div>
                 <motion.div
-                  className="w-2 h-2 bg-lime rounded-full"
+                  className="w-2 h-2 bg-emerald-500 rounded-full"
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
@@ -355,8 +394,8 @@ Calculate yours: ${window.location.origin}`
                             <p className="text-sm text-cream/50 mb-3 leading-snug">
                               {step.action}
                             </p>
-                            <div className="text-[11px] font-mono text-lime/80 pt-2 border-t border-charcoal-800 flex items-center gap-2">
-                              <span className="w-2 h-[1px] bg-lime/40" />
+                            <div className="text-[11px] font-mono text-emerald-500 font-extrabold pt-2 border-t border-charcoal-800 flex items-center gap-2">
+                              <span className="w-2 h-[1px] bg-emerald-500/40" />
                               IMPACT: {step.impact}
                             </div>
                           </motion.div>
@@ -394,7 +433,7 @@ Calculate yours: ${window.location.origin}`
                 <div className="text-xs font-mono uppercase tracking-wider text-cream/40 mb-2">
                   {category}
                 </div>
-                <div className="text-2xl font-display font-bold text-rose mb-2">
+                <div {...getLossProps(details.amount)} className={`${getLossProps(details.amount).className} text-2xl font-display mb-2`}>
                   {currency}{details.amount?.toLocaleString() || '0'}
                 </div>
                 <p className="text-sm text-cream/50 mb-4">
@@ -408,7 +447,7 @@ Calculate yours: ${window.location.origin}`
                     onClick={() => handleRecoveryAction(category, details.amount, details.action_hint)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="text-lime hover:text-lime/80 transition-colors"
+                    className="text-emerald-500 hover:text-emerald-400 transition-colors"
                   >
                     <CheckCircle className="w-5 h-5" />
                   </motion.button>

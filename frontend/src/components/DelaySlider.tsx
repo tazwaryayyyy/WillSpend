@@ -49,8 +49,9 @@ export function DelaySlider({ totalLoss, country, currency }: DelaySliderProps) 
     }
   }, [projectedValue, currency])
 
-  // Scaling shadow for pulsing red glow
-  const glowIntensity = (years / 5) * 20
+  // Scaling shadow for pulsing red glow if above threshold
+  const isHighLoss = currency === '৳' ? projectedValue > 100000 : (currency === '₹' ? projectedValue > 500000 : projectedValue > 10000);
+  const glowIntensity = isHighLoss ? (years / 5) * 20 + 20 : 0;
 
   return (
     <motion.div 
@@ -69,16 +70,14 @@ export function DelaySlider({ totalLoss, country, currency }: DelaySliderProps) 
               {years === 0 ? (
                 "This is your loss right now"
               ) : (
-                <>What if you wait <span className="text-rose">{years}</span> more years?</>
+                <>What if you wait <span className="text-red-500 font-extrabold">{years}</span> more years?</>
               )}
             </div>
           </div>
           <div className="text-right">
             <motion.div 
-              className="text-4xl md:text-5xl font-display font-bold text-rose"
-              style={{ 
-                textShadow: `0 0 ${glowIntensity}px rgba(244, 63, 94, 0.4)`
-              }}
+              className="text-4xl md:text-6xl font-display font-extrabold text-red-500"
+              style={glowIntensity > 0 ? { textShadow: `0 0 ${glowIntensity}px rgba(239, 68, 68, 0.4)` } : {}}
             >
               <span ref={countRef}>{currency}{totalLoss.toLocaleString()}</span>
             </motion.div>
@@ -86,7 +85,7 @@ export function DelaySlider({ totalLoss, country, currency }: DelaySliderProps) 
               <motion.div 
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-amber-500 font-mono text-xs mt-1"
+                className="text-red-500 font-extrabold text-xs mt-1"
               >
                 + {currency}{Math.round(projectedValue - totalLoss).toLocaleString()} more damage from waiting
               </motion.div>
@@ -123,7 +122,7 @@ export function DelaySlider({ totalLoss, country, currency }: DelaySliderProps) 
         }
 
         .delay-slider::-webkit-slider-runnable-track {
-          background: linear-gradient(to right, #f43f5e ${ (years / 5) * 100 }%, #262626 ${ (years / 5) * 100 }%);
+          background: linear-gradient(to right, #ef4444 ${ (years / 5) * 100 }%, #262626 ${ (years / 5) * 100 }%);
           height: 6px;
           border-radius: 5px;
         }
@@ -152,7 +151,7 @@ export function DelaySlider({ totalLoss, country, currency }: DelaySliderProps) 
         }
 
         .delay-slider::-moz-range-progress {
-          background: #f43f5e;
+          background: #ef4444;
           height: 6px;
           border-radius: 5px;
         }

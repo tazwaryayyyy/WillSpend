@@ -1,12 +1,13 @@
 "use client"
 
-import { motion, useMotionValue, useSpring } from "framer-motion"
+import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from 'react'
 import { HeroSection } from '@/components/HeroSection'
 import { FormSection } from '@/components/FormSection'
 import { ResultsSection } from '@/components/ResultsSection'
 import { RecoveryTracker } from '@/components/RecoveryTracker'
 import { Navigation } from '@/components/Navigation'
+import { FullScreenIntro } from '@/components/FullScreenIntro'
 
 export function CustomCursor() {
   const mouseX = useMotionValue(-100)
@@ -34,6 +35,8 @@ export function CustomCursor() {
 }
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true)
+  const [tickerValue, setTickerValue] = useState(0)
   const [showResults, setShowResults] = useState(false)
   const [analysisData, setAnalysisData] = useState<any>(null)
   const [recoveryActions, setRecoveryActions] = useState<any[]>([])
@@ -47,6 +50,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-charcoal-950 text-cream font-display">
+      <AnimatePresence>
+        {showIntro && (
+          <FullScreenIntro 
+            onFinish={(val) => {
+              setTickerValue(val)
+              setShowIntro(false)
+            }}
+            currencySymbol="$" 
+          />
+        )}
+      </AnimatePresence>
+
       {/* Noise overlay */}
       <div className="noise-overlay" />
 
@@ -72,6 +87,7 @@ function App() {
                 setAnalysisData(data)
                 setShowResults(true)
               }}
+              startingTickerValue={tickerValue}
             />
             <RecoveryTracker 
               actions={recoveryActions} 
