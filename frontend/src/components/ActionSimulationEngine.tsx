@@ -15,7 +15,7 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
   const [displayLoss, setDisplayLoss] = useState(totalCost)
   const animationRef = useRef<number | null>(null)
 
-  const sevenDayRecovery = totalCost * 0.02
+  const sevenDayRecovery = totalCost * 0.0187
   const targetLoss = isSimulating ? totalCost - sevenDayRecovery : totalCost
 
   // Number animation using requestAnimationFrame
@@ -56,6 +56,7 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
           Your 7-Day Recovery Simulation
         </h3>
         <p className="text-cream/50">If you start today, here is what changes</p>
+        <p className="text-[10px] font-mono uppercase tracking-wider text-cream/35">Projections are estimates, not guarantees.</p>
       </div>
 
       {/* Custom Toggle Switch */}
@@ -98,7 +99,7 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
               className="mt-4 text-emerald-400 font-bold text-xl flex items-center justify-center gap-2"
             >
               <CheckCircle2 className="w-5 h-5" />
-              Recovered in 7 days: {currency}{Math.round(sevenDayRecovery).toLocaleString()}
+              Projected 7-day recovery: {currency}{Math.round(sevenDayRecovery).toLocaleString()}
             </motion.div>
           )}
         </AnimatePresence>
@@ -107,8 +108,8 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
       {/* Progress Bars */}
       <div className="space-y-6">
         {steps.map((step, idx) => {
-          const targets = [100, 60, 40]
-          const labels = ["Done in day 1", "Setup in progress", "Habit forming"]
+          const targets = [96, 58, 37]
+          const labels = ["Day 1 kickoff", "Setup in progress", "Consistency building"]
           return (
             <div key={idx} className="space-y-2">
               <div className="flex justify-between text-xs font-mono uppercase tracking-wider">
@@ -135,13 +136,13 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
         <div className="bg-charcoal-900/40 p-6 rounded-xl border border-charcoal-800">
           <div className="text-[10px] font-mono uppercase tracking-widest text-rose/50 mb-2">Without Action</div>
           <div className="text-lg text-rose font-bold">
-            Lose {currency}{(dailyLossRate * 7).toLocaleString()} more this week
+            Lose around {currency}{(dailyLossRate * 7).toLocaleString()} this week
           </div>
         </div>
         <div className="bg-charcoal-900/40 p-6 rounded-xl border border-charcoal-800">
           <div className="text-[10px] font-mono uppercase tracking-widest text-emerald-500/50 mb-2">With Action</div>
           <div className="text-lg text-emerald-500 font-bold">
-            Recover {currency}{Math.round(sevenDayRecovery).toLocaleString()} this week
+            Recover around {currency}{Math.round(sevenDayRecovery).toLocaleString()} this week
           </div>
         </div>
       </div>
@@ -173,14 +174,14 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
           >
             <div className="space-y-4">
               <h4 className="text-3xl font-display font-bold text-white leading-tight">
-                You have stopped the financial loss cycle.
+                You are interrupting the financial loss cycle.
               </h4>
               <div className="space-y-1">
                 <p className="text-lg text-slate-300">
-                  Projected status in 30 days: Top 20% of {country} users
+                  Projected status in 30 days: around top 22% of {country} users
                 </p>
                 <p className="text-xs font-mono uppercase tracking-tight text-emerald-400/80">
-                  Based on your committed actions and historical recovery rates
+                  Based on your committed actions and historical recovery ranges
                 </p>
               </div>
             </div>

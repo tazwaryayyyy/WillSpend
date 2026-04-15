@@ -122,7 +122,7 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
         case 'salary_gap_cost':
           return {
             title: "Send one salary negotiation email this week",
-            impact: "A single 8-15% market adjustment solves this entire category of loss permanently."
+            impact: "A typical 7.8-13.6% market adjustment can shrink this loss category fast."
           }
         case 'subscription_cost':
           return {
@@ -142,7 +142,7 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
         default:
           return {
             title: "Automate your savings transfer tonight",
-            impact: "Removing human discipline from the loop is the only way to ensure this loss stops."
+            impact: "Automation lowers missed transfers and helps this loss trend reverse."
           }
       }
     })
@@ -222,7 +222,14 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
       </div>
 
       <div className="text-sm text-center text-emerald-400 font-medium mb-4">
-        Users who act within 24 hours reduce projected loss by up to 30%.
+        In similar profiles, acting within 24 hours reduces projected loss by around 28.7%.
+      </div>
+
+      <div className="text-[10px] text-center font-mono uppercase tracking-wider text-cream/35 mb-1">
+        You control pace and which steps to take.
+      </div>
+      <div className="text-[10px] text-center font-mono uppercase tracking-wider text-cream/35 mb-4">
+        Edit or skip any action anytime.
       </div>
 
       <div className="text-[10px] text-center font-mono uppercase tracking-wider text-cream/30 mb-5">
@@ -236,8 +243,8 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
           animate={!isCommitted ? { scale: [1, 1.02, 1] } : {}}
           transition={{ repeat: Infinity, duration: 2 }}
           className={`w-full py-6 flex items-center justify-center gap-3 font-display font-black text-xl uppercase tracking-widest transition-all duration-500 ${isCommitted
-              ? 'bg-emerald-500 text-charcoal-950 cursor-default'
-              : 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_30px_rgba(239,68,68,0.3)]'
+            ? 'bg-emerald-500 text-charcoal-950 cursor-default'
+            : 'bg-red-500 text-white hover:bg-red-600 shadow-[0_0_30px_rgba(239,68,68,0.3)]'
             }`}
         >
           {isCommitted ? (
@@ -274,10 +281,10 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
               <div className="bg-charcoal-900/60 p-8 border border-charcoal-800 flex flex-col items-center text-center gap-6">
                 <div className="space-y-2">
                   <p className="text-red-500 font-bold text-xl">
-                    If you don't start today, you will lose an additional {currency}{(dailyLossRate * 7).toFixed(2)} this week alone.
+                    If you delay this week, you lose around {currency}{(dailyLossRate * 7).toFixed(2)} more.
                   </p>
                   <p className="text-emerald-500 font-bold text-xl">
-                    If you start today, you will recover {currency}{(totalCost * 0.15).toLocaleString()} within 3 months.
+                    If you start today, 3-month recovery reaches around {currency}{(totalCost * 0.147).toLocaleString()}.
                   </p>
                 </div>
 

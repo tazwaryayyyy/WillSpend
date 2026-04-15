@@ -41,6 +41,8 @@ interface FormSectionProps {
 }
 
 export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionProps) {
+  const CACHE_KEY = 'willspend_last_successful_analysis'
+
   const [formData, setFormData] = useState<FormData>({
     age: 28,
     monthly_income: 3500,
@@ -174,13 +176,13 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Basic validation
     if (formData.age < 18 || formData.age > 100) {
       alert("Please enter a valid age between 18 and 100")
       return
     }
-    
+
     if (formData.monthly_income < 0 || formData.current_salary < 0) {
       alert("Income and salary cannot be negative")
       return
@@ -191,7 +193,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
     try {
       const response = await apiClient.post('/api/analyze', formData)
       const simulation = response.data.simulation
-      
+
       // Calculate category losses for the advisor
       const category_losses = Object.fromEntries(
         Object.entries(simulation.categories).map(([k, v]: [string, any]) => [k, v.amount])
@@ -204,13 +206,44 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
         category_losses
       })
 
-      onSubmit({ 
-        ...response.data, 
-        ai_report: advisorResponse.data.report 
-      })
+      const payload = {
+        ...response.data,
+        ai_report: advisorResponse.data.report
+      }
+
+      localStorage.setItem(CACHE_KEY, JSON.stringify(payload))
+      onSubmit(payload)
     } catch (error) {
       console.error('Analysis failed:', error)
-      alert("Failed to analyze your data. Please check your connection and try again.")
+
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) {
+        try {
+          onSubmit(JSON.parse(cached))
+          alert('Waking up AI engine… Using your last successful analysis for now.')
+          return
+        } catch (cacheError) {
+          console.error('Failed to parse cached analysis:', cacheError)
+        }
+      }
+
+      const fallbackPayload = {
+        profile: formData,
+        simulation: {
+          total_inaction_cost: Math.max(liveLoss, 1),
+          categories: {
+            estimated_inaction_cost: {
+              amount: Math.max(liveLoss, 1),
+              action_hint: 'Reconnect and rerun analysis for AI-personalized steps.',
+              estimated_recovery_1year: Math.round(Math.max(liveLoss, 1) * 0.18),
+            },
+          },
+        },
+        ai_report: 'Waking up AI engine... Live advisor insights will appear when the backend responds.',
+      }
+
+      onSubmit(fallbackPayload)
+      alert('Waking up AI engine… Showing a safe estimated preview.')
     } finally {
       setIsLoading(false)
     }
@@ -262,9 +295,9 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
           </motion.p>
         </div>
 
-        <LiveLossTicker 
-          targetValue={liveLoss} 
-          country={formData.country} 
+        <LiveLossTicker
+          targetValue={liveLoss}
+          country={formData.country}
           startingValue={startingTickerValue}
         />
 
@@ -668,7 +701,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Analyzing...
+                  Waking up AI engine...
                 </>
               ) : (
                 <>

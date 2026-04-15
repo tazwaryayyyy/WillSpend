@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion'
 import { ArrowDown } from 'lucide-react'
 import { AuroraBackground } from './ui/aurora-background'
-import { HeroBadge } from './ui/hero-badge'
 import { AnimatedShinyText } from './ui/animated-shiny-text'
 import { MagneticButton } from './ui/magnetic-button'
 import { ButtonColorful } from './ui/button-colorful'

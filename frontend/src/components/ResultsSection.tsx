@@ -228,7 +228,7 @@ Calculate yours: ${window.location.origin}`
       ? `week ${step.week}`
       : (step?.month ? `month ${step.month}` : (step?.year ? `year ${step.year}` : 'the next 30 days'))
 
-    return `Impact: prevents ${currency}${Number(amount).toLocaleString()} loss in ${timeframe}`
+    return `Impact: prevents around ${currency}${Number(amount).toLocaleString()} loss in ${timeframe}`
   }
 
   if (!data) return null
@@ -321,19 +321,19 @@ Calculate yours: ${window.location.origin}`
           </div>
 
           <h1 className="text-display text-5xl md:text-7xl text-cream mb-6">
-            You threw away{' '}
+            You left around{' '}
             <span {...getLossProps(totalCost)}>
               {currency}{totalCost.toLocaleString()}
             </span>
             <br />
-            <span className="text-charcoal-600">by doing nothing</span>
+            <span className="text-charcoal-600">on the table by waiting</span>
           </h1>
 
           <AssumptionsPanel country={country} />
         </motion.div>
 
         <div className="text-2xl text-center text-slate-300 py-8">
-          "Your biggest financial mistake isn't losing money. It's waiting."
+          "Waiting is the most expensive decision."
         </div>
 
         {/* Bento Grid */}
@@ -409,10 +409,10 @@ Calculate yours: ${window.location.origin}`
                 Recovery Time
               </div>
               <div className="text-2xl font-display font-extrabold text-emerald-500">
-                8.3
+                8.7
               </div>
               <div className="mt-2 text-cream/50 text-sm">
-                Months to recover
+                Estimated months to recover
               </div>
             </SpotlightCard>
           </motion.div>
@@ -434,9 +434,9 @@ Calculate yours: ${window.location.origin}`
                 Counterfactual You
               </div>
               <p className="text-lg text-cream/80 leading-relaxed">
-                If you had acted {data.profile?.years_at_same_salary || 0} year(s) ago, your net worth would be approximately{' '}
+                If you had acted {data.profile?.years_at_same_salary || 0} year(s) ago, your net worth would be around{' '}
                 <span className="text-emerald-500 font-extrabold">
-                  {currency}{(totalCost * 1.25).toLocaleString()}
+                  {currency}{(totalCost * 1.247).toLocaleString()}
                 </span>{' '}
                 higher today.
               </p>
@@ -467,7 +467,7 @@ Calculate yours: ${window.location.origin}`
                 />
               </div>
               <div className="text-[10px] font-mono uppercase tracking-wider text-cream/40 mb-5">
-                Generated from your loss profile (not generic advice)
+                Generated from your loss profile and local model inputs
               </div>
 
               {(() => {
@@ -739,7 +739,7 @@ Calculate yours: ${window.location.origin}`
                   <span className="text-red-500 font-bold">
                     {currency}{Math.round((totalCost / Math.max(1, (data.profile?.years_at_same_salary || 1) * 365)) * 7 * (hoverLeave ? 1.03 : 1)).toLocaleString()}
                   </span>{' '}
-                  in the next 7 days.
+                  in the next 7 days, based on your current profile.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
