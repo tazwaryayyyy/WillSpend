@@ -190,6 +190,7 @@ npm run dev
 
 Recommended Vercel settings:
 
+- Root directory: `frontend`
 - Framework: Vite
 - Build command: `npm run build`
 - Output directory: `dist`

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Timer, ArrowRight } from 'lucide-react'
-import { ActionSimulationEngine } from './ActionSimulationEngine'
+
+const ActionSimulationEngine = lazy(() => import('./ActionSimulationEngine').then((m) => ({ default: m.ActionSimulationEngine })))
 
 interface ForceActionSystemProps {
   totalCost: number
@@ -298,14 +299,16 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
                   </div>
                 </div>
 
-                <ActionSimulationEngine
-                  totalCost={totalCost}
-                  dailyLossRate={dailyLossRate}
-                  currency={currency}
-                  country={country}
-                  steps={steps}
-                  onSimulationChange={setIsSimulating}
-                />
+                <Suspense fallback={<div className="text-center text-cream/50 py-4">Loading simulation engine...</div>}>
+                  <ActionSimulationEngine
+                    totalCost={totalCost}
+                    dailyLossRate={dailyLossRate}
+                    currency={currency}
+                    country={country}
+                    steps={steps}
+                    onSimulationChange={setIsSimulating}
+                  />
+                </Suspense>
               </div>
             </motion.div>
           )}

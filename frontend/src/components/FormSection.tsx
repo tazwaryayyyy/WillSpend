@@ -74,6 +74,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
 
   const [isLoading, setIsLoading] = useState(false)
   const [liveLoss, setLiveLoss] = useState(0)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Calculate live loss as user types
   useEffect(() => {
@@ -189,6 +190,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
     }
 
     setIsLoading(true)
+    setSubmitError(null)
 
     try {
       const response = await apiClient.post('/api/analyze', formData)
@@ -220,7 +222,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
       if (cached) {
         try {
           onSubmit(JSON.parse(cached))
-          alert('Waking up AI engine… Using your last successful analysis for now.')
+          setSubmitError('Waking up AI engine... Using your last successful analysis for now.')
           return
         } catch (cacheError) {
           console.error('Failed to parse cached analysis:', cacheError)
@@ -243,7 +245,7 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
       }
 
       onSubmit(fallbackPayload)
-      alert('Waking up AI engine… Showing a safe estimated preview.')
+      setSubmitError('Waking up AI engine... Showing a safe estimated preview. Please retry for live AI insights.')
     } finally {
       setIsLoading(false)
     }
@@ -691,6 +693,11 @@ export function FormSection({ onSubmit, startingTickerValue = 0 }: FormSectionPr
 
           {/* Submit Button */}
           <div className="text-center pt-12">
+            {submitError && (
+              <p className="mb-4 text-sm text-amber-400 font-mono uppercase tracking-wider">
+                {submitError}
+              </p>
+            )}
             <motion.button
               type="submit"
               disabled={isLoading}

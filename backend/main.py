@@ -2,10 +2,10 @@ import os
 import logging
 import traceback
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from pdf_generator import generate_report_pdf
 from ai_advisor import generate_report
@@ -25,26 +25,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Model for recovery validation
+
+
 class RecoveryAction(BaseModel):
     action_id: str
     estimated_recovery: float
     timestamp: datetime
 
 # Model for PDF report generation
+
+
 class PDFReportRequest(BaseModel):
     simulation: dict
     user_profile: dict
     ai_advice: str
 
+
 app = FastAPI(title="WillSpend API")
 
 # CORS configuration
-# In production, this should include your specific Netlify and localhost URLs
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://willspend.netlify.app",
-    "https://will-spend.netlify.app",
+    "https://willspend.vercel.app",
 ]
 
 app.add_middleware(
@@ -56,42 +59,97 @@ app.add_middleware(
 )
 
 
+def structured_error(request_id: str, code: str, message: str, details: str | None = None):
+    payload = {
+        "error": {
+            "code": code,
+            "message": message,
+            "request_id": request_id,
+            "timestamp": datetime.now().isoformat(),
+        }
+    }
+    if details:
+        payload["error"]["details"] = details
+    return payload
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException):
+    request_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=structured_error(
+            request_id, f"HTTP_{exc.status_code}", detail),
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_: Request, exc: Exception):
+    request_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    logger.error("[%s] Unhandled exception: %s", request_id, exc)
+    logger.error("[%s] Traceback: %s", request_id, traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content=structured_error(
+            request_id, "UNEXPECTED_ERROR", "Internal server error. Please try again later."),
+    )
+
+
 @app.post("/analyze", response_model=WillSpendResponse)
 async def analyze(profile: UserProfile):
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash(str(profile.dict())) % 10000}"
-    logger.info(f"[{request_id}] Starting analysis for user age {profile.age}, country {profile.country}")
-    
+    logger.info(
+        "[%s] Starting analysis for user age %s, country %s",
+        request_id,
+        profile.age,
+        profile.country,
+    )
+
     try:
         # Run simulation
-        logger.info(f"[{request_id}] Running financial simulation")
+        logger.info("[%s] Running financial simulation", request_id)
         simulation = run_simulation(profile)
-        
+
         if not simulation.items:
-            logger.warning(f"[{request_id}] No inaction items detected")
-            raise HTTPException(status_code=400, detail="No inaction items detected. Please check your inputs.")
-        
-        logger.info(f"[{request_id}] Simulation complete: {simulation.total_inaction_cost} total loss, {len(simulation.items)} categories")
-        
+            logger.warning("[%s] No inaction items detected", request_id)
+            raise HTTPException(
+                status_code=400, detail="No inaction items detected. Please check your inputs.")
+
+        logger.info(
+            "[%s] Simulation complete: %s total loss, %s categories",
+            request_id,
+            simulation.total_inaction_cost,
+            len(simulation.items),
+        )
+
         # Generate AI report
-        logger.info(f"[{request_id}] Generating AI report using provider: {get_current_ai_provider()}")
+        logger.info(
+            "[%s] Generating AI report using provider: %s",
+            request_id,
+            get_current_ai_provider(),
+        )
         try:
             ai_report = generate_report(simulation, profile)
-            logger.info(f"[{request_id}] AI report generated successfully")
+            logger.info("[%s] AI report generated successfully", request_id)
         except Exception as ai_error:
-            logger.error(f"[{request_id}] AI report generation failed: {str(ai_error)}")
-            raise HTTPException(status_code=500, detail="AI Provider is temporarily unavailable. Please try again.")
-        
-        logger.info(f"[{request_id}] Analysis completed successfully")
+            logger.error(
+                "[%s] AI report generation failed: %s", request_id, ai_error)
+            raise HTTPException(
+                status_code=502, detail="AI provider is temporarily unavailable. Please try again.") from ai_error
+
+        logger.info("[%s] Analysis completed successfully", request_id)
         return WillSpendResponse(simulation=simulation, ai_report=ai_report)
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
         error_msg = f"Unexpected error during analysis: {str(e)}"
-        logger.error(f"[{request_id}] {error_msg}")
-        logger.error(f"[{request_id}] Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
+        logger.error("[%s] %s", request_id, error_msg)
+        logger.error("[%s] Traceback: %s", request_id, traceback.format_exc())
+        raise HTTPException(
+            status_code=500, detail="Internal server error. Please try again later.") from e
 
 
 @app.post("/advisor")
@@ -100,18 +158,23 @@ async def advisor_endpoint(request: AdvisorRequest):
     Dedicated endpoint for the AI Advisor using anchored category losses.
     """
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_advisor"
-    logger.info(f"[{request_id}] AI Advisor request received for {request.profile.country}")
-    
+    logger.info(
+        "[%s] AI Advisor request received for %s",
+        request_id,
+        request.profile.country,
+    )
+
     try:
         report = generate_report(
-            simulation=request.simulation, 
-            profile=request.profile, 
+            simulation=request.simulation,
+            profile=request.profile,
             category_losses=request.category_losses
         )
         return {"report": report}
     except Exception as e:
-        logger.error(f"[{request_id}] AI Advisor failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="AI Advisor failed to generate advice.")
+        logger.error("[%s] AI Advisor failed: %s", request_id, e)
+        raise HTTPException(
+            status_code=502, detail="AI advisor failed to generate advice.") from e
 
 
 @app.get("/health")
@@ -125,8 +188,9 @@ def health():
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return {"status": "degraded", "error": "Health check partially failed"}
+        logger.error("Health check failed: %s", e)
+        raise HTTPException(
+            status_code=503, detail="Health check failed") from e
 
 
 @app.post("/validate_recovery")
@@ -136,20 +200,25 @@ async def validate_recovery(action: RecoveryAction):
     This is a stub endpoint for future backend integration.
     """
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{action.action_id}"
-    logger.info(f"[{request_id}] Recovery validation request: {action.action_id}, recovery: {action.estimated_recovery}")
-    
+    logger.info(
+        "[%s] Recovery validation request: %s, recovery: %s",
+        request_id,
+        action.action_id,
+        action.estimated_recovery,
+    )
+
     try:
         # Basic validation
         if not action.action_id or action.estimated_recovery < 0:
             raise HTTPException(status_code=400, detail="Invalid action data")
-        
+
         # Validate timestamp (now handled by Pydantic, but we can do extra checks if needed)
         # action.timestamp is already a datetime object
-        
+
         # In a real implementation, this would save to a database
         # For now, we just validate and return success
-        logger.info(f"[{request_id}] Recovery action validated successfully")
-        
+        logger.info("[%s] Recovery action validated successfully", request_id)
+
         return {
             "valid": True,
             "message": "Action validated",
@@ -157,12 +226,13 @@ async def validate_recovery(action: RecoveryAction):
             "estimated_recovery": round(action.estimated_recovery, 2),
             "validated_at": datetime.now().isoformat()
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[{request_id}] Recovery validation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Validation failed. Please try again later.")
+        logger.error("[%s] Recovery validation failed: %s", request_id, e)
+        raise HTTPException(
+            status_code=500, detail="Validation failed. Please try again later.") from e
 
 
 @app.post("/generate_report")
@@ -171,8 +241,8 @@ async def generate_report_pdf_endpoint(request: PDFReportRequest):
     Generate PDF report for the financial analysis.
     """
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_pdf"
-    logger.info(f"[{request_id}] PDF generation request received")
-    
+    logger.info("[%s] PDF generation request received", request_id)
+
     try:
         # Generate PDF
         pdf_bytes = generate_report_pdf(
@@ -180,9 +250,13 @@ async def generate_report_pdf_endpoint(request: PDFReportRequest):
             user_profile=request.user_profile,
             ai_advice=request.ai_advice
         )
-        
-        logger.info(f"[{request_id}] PDF generated successfully, size: {len(pdf_bytes)} bytes")
-        
+
+        logger.info(
+            "[%s] PDF generated successfully, size: %s bytes",
+            request_id,
+            len(pdf_bytes),
+        )
+
         # Return PDF as response
         return Response(
             content=pdf_bytes,
@@ -191,12 +265,13 @@ async def generate_report_pdf_endpoint(request: PDFReportRequest):
                 "Content-Disposition": f"attachment; filename=WillSpend_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             }
         )
-        
+
     except Exception as e:
         error_msg = f"PDF generation failed: {str(e)}"
-        logger.error(f"[{request_id}] {error_msg}")
-        logger.error(f"[{request_id}] Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail="Failed to generate PDF report. Please try again later.")
+        logger.error("[%s] %s", request_id, error_msg)
+        logger.error("[%s] Traceback: %s", request_id, traceback.format_exc())
+        raise HTTPException(
+            status_code=500, detail="Failed to generate PDF report. Please try again later.") from e
 
 
 @app.get("/ping")
@@ -206,26 +281,26 @@ async def ping():
     Returns immediately and triggers a lightweight AI call for warm-up.
     """
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_ping"
-    logger.info(f"[{request_id}] Ping received - warming up services")
-    
+    logger.info("[%s] Ping received - warming up services", request_id)
+
     try:
         # Trigger a lightweight AI call to warm up the connection
         from ai_client import get_ai_response
-        
+
         # This is a minimal warm-up call
         warmup_prompt = "Respond with just: OK"
-        ai_response = get_ai_response(warmup_prompt, "warmup")
-        
-        logger.info(f"[{request_id}] Warm-up completed successfully")
+        _ = get_ai_response(warmup_prompt, "warmup")
+
+        logger.info("[%s] Warm-up completed successfully", request_id)
         return {
             "status": "ok",
             "message": "Service warmed up",
             "ai_provider": get_current_ai_provider(),
             "timestamp": datetime.now().isoformat()
         }
-        
-    except Exception as e:
-        logger.warning(f"[{request_id}] Warm-up AI call failed: {str(e)}")
+
+    except RuntimeError as e:
+        logger.warning("[%s] Warm-up AI call failed: %s", request_id, e)
         # Still return ok since the main purpose is to keep the instance alive
         return {
             "status": "ok",
@@ -244,7 +319,8 @@ if os.path.exists(FRONTEND_PATH):
 
 
 @app.get("/")
-def health(): return {"status": "ok"}
+def root_status():
+    return {"status": "ok"}
 
 
 # Optional: Keep the static serving if needed for local testing

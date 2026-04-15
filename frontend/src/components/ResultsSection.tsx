@@ -1,16 +1,17 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
 import { ArrowLeft, Download, CheckCircle, Share2, X, Copy } from 'lucide-react'
 import apiClient from '@/api/client'
 import { SpotlightCard } from './ui/spotlight-card'
 import { parseAiReport } from '@/lib/utils'
-import { PeerComparison } from './PeerComparison'
 import { DelaySlider } from './DelaySlider'
-import { RecoveryChart } from './RecoveryChart'
 import { ForceActionSystem } from './ForceActionSystem'
 import { SocialPressurePanel } from './SocialPressurePanel'
+
+const RecoveryChart = lazy(() => import('./RecoveryChart').then((m) => ({ default: m.RecoveryChart })))
+const PeerComparison = lazy(() => import('./PeerComparison').then((m) => ({ default: m.PeerComparison })))
 
 interface ResultsSectionProps {
   data: any
@@ -291,9 +292,13 @@ Calculate yours: ${window.location.origin}`
         <DelaySlider totalLoss={totalCost} country={country} currency={currency} />
 
         <SectionSeparator text="Here is what starting today actually looks like." />
-        <RecoveryChart totalLoss={totalCost} country={country} currency={currency} />
+        <Suspense fallback={<div className="text-center text-cream/50 py-8">Loading recovery projection...</div>}>
+          <RecoveryChart totalLoss={totalCost} country={country} currency={currency} />
+        </Suspense>
 
-        <PeerComparison userLoss={totalCost} country={country} />
+        <Suspense fallback={<div className="text-center text-cream/50 py-8">Loading peer benchmark...</div>}>
+          <PeerComparison userLoss={totalCost} country={country} />
+        </Suspense>
 
         <SocialPressurePanel userLoss={totalCost} country={country} currency={currency} />
 

@@ -1,14 +1,15 @@
 "use client"
 
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion"
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { HeroSection } from '@/components/HeroSection'
 import { FormSection } from '@/components/FormSection'
-import { ResultsSection } from '@/components/ResultsSection'
 import { RecoveryTracker } from '@/components/RecoveryTracker'
 import { Navigation } from '@/components/Navigation'
 import { FullScreenIntro } from '@/components/FullScreenIntro'
 import { OngoingLossBar } from '@/components/OngoingLossBar'
+
+const ResultsSection = lazy(() => import('@/components/ResultsSection').then((m) => ({ default: m.ResultsSection })))
 
 export function CustomCursor() {
   const mouseX = useMotionValue(-100)
@@ -49,7 +50,7 @@ function App() {
     }
   }, [])
 
-  const dailyLossRate = analysisData?.simulation?.total_inaction_cost 
+  const dailyLossRate = analysisData?.simulation?.total_inaction_cost
     ? analysisData.simulation.total_inaction_cost / ((analysisData.profile?.years_at_same_salary || 1) * 365)
     : 0
 
@@ -59,12 +60,12 @@ function App() {
     <div className="min-h-screen bg-charcoal-950 text-cream font-display">
       <AnimatePresence>
         {showIntro && (
-          <FullScreenIntro 
+          <FullScreenIntro
             onFinish={(val) => {
               setTickerValue(val)
               setShowIntro(false)
             }}
-            currencySymbol="$" 
+            currencySymbol="$"
           />
         )}
       </AnimatePresence>
@@ -77,15 +78,17 @@ function App() {
 
       <main className="relative z-10">
         {showResults && analysisData ? (
-          <ResultsSection
-            data={analysisData}
-            onRecoveryComplete={(action: any) => {
-              const updated = [...recoveryActions, action]
-              setRecoveryActions(updated)
-              localStorage.setItem('recoveryActions', JSON.stringify(updated))
-            }}
-            onBack={() => setShowResults(false)}
-          />
+          <Suspense fallback={<div className="px-6 py-16 text-center text-cream/60">Loading your recovery dashboard...</div>}>
+            <ResultsSection
+              data={analysisData}
+              onRecoveryComplete={(action: any) => {
+                const updated = [...recoveryActions, action]
+                setRecoveryActions(updated)
+                localStorage.setItem('recoveryActions', JSON.stringify(updated))
+              }}
+              onBack={() => setShowResults(false)}
+            />
+          </Suspense>
         ) : (
           <>
             <HeroSection />
@@ -96,18 +99,18 @@ function App() {
               }}
               startingTickerValue={tickerValue}
             />
-            <RecoveryTracker 
-              actions={recoveryActions} 
+            <RecoveryTracker
+              actions={recoveryActions}
               country={analysisData?.profile?.country}
             />
           </>
         )}
       </main>
 
-      <OngoingLossBar 
-        isVisible={showResults && analysisData !== null} 
-        dailyLossRate={dailyLossRate} 
-        currency={currency} 
+      <OngoingLossBar
+        isVisible={showResults && analysisData !== null}
+        dailyLossRate={dailyLossRate}
+        currency={currency}
       />
     </div>
   )

@@ -4,6 +4,24 @@ from cache_manager import cached_simulation
 from bangladesh_calculations import calculate_bangladesh_specific_metrics
 
 
+def _safe_float(value, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def future_value_missed(monthly_amount: float, years: int, annual_rate: float = 0.10) -> float:
     """Calculate how much you'd have if you invested monthly_amount for `years` at annual_rate."""
     if years <= 0 or monthly_amount <= 0:
@@ -18,7 +36,7 @@ def compound_interest_loss(balance: float, rate_diff: tuple, years: int) -> floa
     """Loss from keeping money in a low-yield account vs high-yield, monthly compounding."""
     if years <= 0 or balance <= 0:
         return 0.0
-    
+
     # Monthly compounding formula: A = P(1 + r/n)^(nt)
     n = 12  # monthly
     r_low = (rate_diff[0] / 100) / n
@@ -27,7 +45,7 @@ def compound_interest_loss(balance: float, rate_diff: tuple, years: int) -> floa
 
     low = balance * ((1 + r_low) ** periods)
     high = balance * ((1 + r_high) ** periods)
-    
+
     return round(high - low, 2)
 
 
@@ -43,17 +61,17 @@ def debt_interest_overpaid(balance: float, current_rate: float, refinance_rate: 
     """Extra interest paid by not refinancing, monthly compounding on the difference."""
     if current_rate <= refinance_rate or years <= 0 or balance <= 0:
         return 0.0
-    
+
     n = 12
     r_curr = (current_rate / 100) / n
     r_refi = (refinance_rate / 100) / n
     periods = years * n
-    
+
     # Estimate total interest paid on a flat balance (worst case/simple comparison)
     # but using compounding logic for a more "pessimistic" cost of inaction
     curr_total = balance * ((1 + r_curr) ** periods)
     refi_total = balance * ((1 + r_refi) ** periods)
-    
+
     return round(curr_total - refi_total, 2)
 
 
@@ -70,19 +88,20 @@ def get_action_hint(category: str) -> str:
     """Get suggested action hint based on category."""
     hints = {
         "Salary Not Negotiated": "negotiate your next raise",
-        "Savings Account Not Switched": "switch to high-yield savings", 
+        "Savings Account Not Switched": "switch to high-yield savings",
         "Not Investing Monthly": "start automated monthly investing",
         "401k Match Leak": "enroll in 401k up to match",
         "SIP Delay Cost": "start your SIP immediately",
         "Debt Not Refinanced": "apply for balance transfer card",
         "Sanchayapatra Missed": "apply for Sanchayapatra government bond"
     }
-    
+
     # Handle subscription categories
     if "Unused Subscription" in category:
         return "cancel unused subscriptions"
-    
+
     return hints.get(category, "take action to recover losses")
+
 
 def estimate_recovery_1year(total_cost: float, category: str) -> float:
     """Estimate how much can be recovered in 1 year."""
@@ -95,17 +114,48 @@ def estimate_recovery_1year(total_cost: float, category: str) -> float:
         "Debt Not Refinanced": 0.65,  # 65% via lower interest
         "Sanchayapatra Missed": 0.85  # 85% recoverable by switching soon
     }
-    
+
     if "Unused Subscription" in category:
         return 1.0  # 100% recoverable by canceling
-    
+
     rate = recovery_rates.get(category, 0.5)
     return round(total_cost * rate, 2)
+
 
 @cached_simulation(ttl_seconds=600)
 def run_simulation(profile: UserProfile) -> SimulationResult:
     items: List[InactionItem] = []
-    
+
+    # Normalize optional fields so arithmetic and string formatting never crash on nulls.
+    profile.monthly_income = _safe_float(profile.monthly_income)
+    profile.current_salary = _safe_float(profile.current_salary)
+    profile.market_rate_salary = _safe_float(profile.market_rate_salary)
+    profile.years_at_same_salary = _safe_int(profile.years_at_same_salary)
+    profile.savings_balance = _safe_float(profile.savings_balance)
+    profile.current_savings_rate = _safe_float(profile.current_savings_rate)
+    profile.high_yield_savings_rate = _safe_float(
+        profile.high_yield_savings_rate)
+    profile.years_savings_idle = _safe_int(profile.years_savings_idle)
+    profile.monthly_investment_missed = _safe_float(
+        profile.monthly_investment_missed)
+    profile.years_not_investing = _safe_int(profile.years_not_investing)
+    profile.employer_match_pct = _safe_float(profile.employer_match_pct)
+    profile.user_contribution_pct = _safe_float(profile.user_contribution_pct)
+    profile.years_not_matching_401k = _safe_int(
+        profile.years_not_matching_401k)
+    profile.monthly_sip_missed = _safe_float(profile.monthly_sip_missed)
+    profile.years_sip_delayed = _safe_int(profile.years_sip_delayed)
+    profile.mobile_banking_balance = _safe_float(
+        profile.mobile_banking_balance)
+    profile.years_mobile_banking_idle = _safe_int(
+        profile.years_mobile_banking_idle)
+    profile.monthly_dps_missed = _safe_float(profile.monthly_dps_missed)
+    profile.months_dps_delayed = _safe_int(profile.months_dps_delayed)
+    profile.monthly_sanchayapatra_eligible = _safe_float(
+        profile.monthly_sanchayapatra_eligible)
+    profile.years_sanchayapatra_missed = _safe_int(
+        profile.years_sanchayapatra_missed)
+
     if profile.country == "India":
         currency = "₹"
     elif profile.country == "Bangladesh":
@@ -113,9 +163,9 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
     else:
         currency = "$"
 
-
     # 1. Salary not negotiated
-    s_loss = salary_loss(profile.current_salary, profile.market_rate_salary, profile.years_at_same_salary)
+    s_loss = salary_loss(profile.current_salary,
+                         profile.market_rate_salary, profile.years_at_same_salary)
     if s_loss > 0:
         category = "Salary Not Negotiated"
         items.append(InactionItem(
@@ -139,45 +189,55 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
             category=category,
             description=f"Your {currency}{profile.savings_balance:,.0f} sitting at {profile.current_savings_rate}% instead of {profile.high_yield_savings_rate}% for {profile.years_savings_idle} year(s).",
             total_cost=savings_loss,
-            recovery_months=recovery_months(savings_loss, profile.monthly_income),
+            recovery_months=recovery_months(
+                savings_loss, profile.monthly_income),
             action_hint=get_action_hint(category),
-            estimated_recovery_1year=estimate_recovery_1year(savings_loss, category)
+            estimated_recovery_1year=estimate_recovery_1year(
+                savings_loss, category)
         ))
 
     # 3. Not investing monthly
-    invest_loss = future_value_missed(profile.monthly_investment_missed, profile.years_not_investing)
+    invest_loss = future_value_missed(
+        profile.monthly_investment_missed, profile.years_not_investing)
     if invest_loss > 0:
         category = "Not Investing Monthly"
         items.append(InactionItem(
             category=category,
             description=f"Not investing {currency}{profile.monthly_investment_missed:,.0f}/mo for {profile.years_not_investing} year(s) at 10% avg market return.",
             total_cost=invest_loss,
-            recovery_months=recovery_months(invest_loss, profile.monthly_income),
+            recovery_months=recovery_months(
+                invest_loss, profile.monthly_income),
             action_hint=get_action_hint(category),
-            estimated_recovery_1year=estimate_recovery_1year(invest_loss, category)
+            estimated_recovery_1year=estimate_recovery_1year(
+                invest_loss, category)
         ))
 
     # 4. 401k Match Leak (US Only)
     if profile.country == "US" and profile.employer_match_pct > 0 and profile.years_not_matching_401k > 0:
-        match_leak_pct = max(0, profile.employer_match_pct - profile.user_contribution_pct)
+        match_leak_pct = max(0, profile.employer_match_pct -
+                             profile.user_contribution_pct)
         # Monthly amount lost is % of monthly monthly salary
         # Assuming current_salary is monthly
         monthly_leak = (match_leak_pct / 100) * profile.current_salary
         if monthly_leak > 0:
-            match_loss = future_value_missed(monthly_leak, profile.years_not_matching_401k, 0.105)
+            match_loss = future_value_missed(
+                monthly_leak, profile.years_not_matching_401k, 0.105)
             category = "401k Match Leak"
             items.append(InactionItem(
                 category=category,
                 description=f"You missed out on a {match_leak_pct}% employer match for {profile.years_not_matching_401k} year(s). That's free money left on the table.",
                 total_cost=match_loss,
-                recovery_months=recovery_months(match_loss, profile.monthly_income),
+                recovery_months=recovery_months(
+                    match_loss, profile.monthly_income),
                 action_hint=get_action_hint(category),
-                estimated_recovery_1year=estimate_recovery_1year(match_loss, category)
+                estimated_recovery_1year=estimate_recovery_1year(
+                    match_loss, category)
             ))
 
     # 5. SIP Delay Cost (India Only)
     if profile.country == "India" and profile.monthly_sip_missed > 0 and profile.years_sip_delayed > 0:
-        sip_loss = future_value_missed(profile.monthly_sip_missed, profile.years_sip_delayed, 0.12)
+        sip_loss = future_value_missed(
+            profile.monthly_sip_missed, profile.years_sip_delayed, 0.12)
         category = "SIP Delay Cost"
         items.append(InactionItem(
             category=category,
@@ -185,13 +245,14 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
             total_cost=sip_loss,
             recovery_months=recovery_months(sip_loss, profile.monthly_income),
             action_hint=get_action_hint(category),
-            estimated_recovery_1year=estimate_recovery_1year(sip_loss, category)
+            estimated_recovery_1year=estimate_recovery_1year(
+                sip_loss, category)
         ))
 
     # 5.1 Bangladesh Specifics
     if profile.country == "Bangladesh":
         bd_metrics = calculate_bangladesh_specific_metrics(profile.dict())
-        
+
         if "mobile_banking_idle_cost" in bd_metrics:
             cost = bd_metrics["mobile_banking_idle_cost"]
             category = "Idle Mobile Banking"
@@ -201,9 +262,10 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
                 total_cost=cost,
                 recovery_months=recovery_months(cost, profile.monthly_income),
                 action_hint="transfer to high-interest FDR/DPS",
-                estimated_recovery_1year=estimate_recovery_1year(cost, "Savings Account Not Switched")
+                estimated_recovery_1year=estimate_recovery_1year(
+                    cost, "Savings Account Not Switched")
             ))
-            
+
         if "dps_missed_cost" in bd_metrics:
             cost = bd_metrics["dps_missed_cost"]
             category = "Missed DPS"
@@ -213,7 +275,8 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
                 total_cost=cost,
                 recovery_months=recovery_months(cost, profile.monthly_income),
                 action_hint="open a monthly DPS immediately",
-                estimated_recovery_1year=estimate_recovery_1year(cost, "SIP Delay Cost")
+                estimated_recovery_1year=estimate_recovery_1year(
+                    cost, "SIP Delay Cost")
             ))
 
         if "sanchayapatra_missed_cost" in bd_metrics:
@@ -225,11 +288,12 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
                 total_cost=cost,
                 recovery_months=recovery_months(cost, profile.monthly_income),
                 action_hint=get_action_hint(category),
-                estimated_recovery_1year=estimate_recovery_1year(cost, category)
+                estimated_recovery_1year=estimate_recovery_1year(
+                    cost, category)
             ))
 
     # 6. Subscriptions
-    for sub in profile.subscriptions:
+    for sub in (profile.subscriptions or []):
         cost = round(sub.monthly_cost * sub.months_active, 2)
         if cost > 0:
             category = f"Unused Subscription: {sub.name}"
@@ -239,27 +303,31 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
                 total_cost=cost,
                 recovery_months=recovery_months(cost, profile.monthly_income),
                 action_hint=get_action_hint(category),
-                estimated_recovery_1year=estimate_recovery_1year(cost, category)
+                estimated_recovery_1year=estimate_recovery_1year(
+                    cost, category)
             ))
 
     # 7. Debts not refinanced
-    for debt in profile.debts:
-        d_loss = debt_interest_overpaid(debt.balance, debt.current_rate, debt.refinance_rate, debt.years)
+    for debt in (profile.debts or []):
+        d_loss = debt_interest_overpaid(
+            debt.balance, debt.current_rate, debt.refinance_rate, debt.years)
         if d_loss > 0:
             category = f"Debt Not Refinanced: {debt.name}"
             items.append(InactionItem(
                 category=category,
                 description=f"Paying {debt.current_rate}% on {currency}{debt.balance:,.0f} instead of refinancing at {debt.refinance_rate}% for {debt.years} year(s).",
                 total_cost=d_loss,
-                recovery_months=recovery_months(d_loss, profile.monthly_income),
+                recovery_months=recovery_months(
+                    d_loss, profile.monthly_income),
                 action_hint=get_action_hint(category),
-                estimated_recovery_1year=estimate_recovery_1year(d_loss, category)
+                estimated_recovery_1year=estimate_recovery_1year(
+                    d_loss, category)
             ))
 
     # Sort by damage — highest first
     items.sort(key=lambda x: x.total_cost, reverse=True)
     total = round(sum(i.total_cost for i in items), 2)
-    
+
     # Create categories breakdown
     categories = {}
     for item in items:
@@ -273,10 +341,11 @@ def run_simulation(profile: UserProfile) -> SimulationResult:
             }
         categories[base_category]["amount"] += item.total_cost
         categories[base_category]["estimated_recovery_1year"] += item.estimated_recovery_1year
-    
+
     # Round category amounts
     for cat in categories:
         categories[cat]["amount"] = round(categories[cat]["amount"], 2)
-        categories[cat]["estimated_recovery_1year"] = round(categories[cat]["estimated_recovery_1year"], 2)
+        categories[cat]["estimated_recovery_1year"] = round(
+            categories[cat]["estimated_recovery_1year"], 2)
 
     return SimulationResult(total_inaction_cost=total, items=items, categories=categories)
