@@ -7,13 +7,14 @@ interface ActionSimulationEngineProps {
   currency: string
   country: string
   steps: Array<{ title: string; impact: string }>
+  onSimulationChange?: (isActive: boolean) => void
 }
 
-export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, country, steps }: ActionSimulationEngineProps) {
+export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, country, steps, onSimulationChange }: ActionSimulationEngineProps) {
   const [isSimulating, setIsSimulating] = useState(false)
   const [displayLoss, setDisplayLoss] = useState(totalCost)
   const animationRef = useRef<number | null>(null)
-  
+
   const sevenDayRecovery = totalCost * 0.02
   const targetLoss = isSimulating ? totalCost - sevenDayRecovery : totalCost
 
@@ -26,10 +27,10 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
     const animate = (currentTime: number) => {
       const elapsed = currentTime - start
       const progress = Math.min(elapsed / duration, 1)
-      
+
       // Ease out expo curve
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress)
-      
+
       const currentVal = initialValue + (targetLoss - initialValue) * easeProgress
       setDisplayLoss(currentVal)
 
@@ -43,6 +44,10 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
   }, [isSimulating, targetLoss])
+
+  useEffect(() => {
+    onSimulationChange?.(isSimulating)
+  }, [isSimulating, onSimulationChange])
 
   return (
     <div className="mt-12 space-y-8 border-t border-charcoal-700 pt-12">
@@ -60,9 +65,8 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
         </span>
         <button
           onClick={() => setIsSimulating(!isSimulating)}
-          className={`relative w-16 h-8 rounded-full transition-colors duration-500 flex items-center px-1 ${
-            isSimulating ? 'bg-emerald-500' : 'bg-charcoal-700'
-          }`}
+          className={`relative w-16 h-8 rounded-full transition-colors duration-500 flex items-center px-1 ${isSimulating ? 'bg-emerald-500' : 'bg-charcoal-700'
+            }`}
         >
           <motion.div
             animate={{ x: isSimulating ? 32 : 0 }}
@@ -80,12 +84,11 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
         <div className="text-xs font-mono uppercase tracking-[0.2em] text-cream/40 mb-4">
           Simulated Total Loss
         </div>
-        <div className={`text-6xl md:text-7xl font-display font-black transition-colors duration-500 ${
-          isSimulating ? 'text-emerald-500' : 'text-rose'
-        }`}>
+        <div className={`text-6xl md:text-7xl font-display font-black transition-colors duration-500 ${isSimulating ? 'text-emerald-500' : 'text-rose'
+          }`}>
           {currency}{Math.round(displayLoss).toLocaleString()}
         </div>
-        
+
         <AnimatePresence>
           {isSimulating && (
             <motion.div
@@ -189,11 +192,11 @@ export function ActionSimulationEngine({ totalCost, dailyLossRate, currency, cou
 }
 
 const CheckCircle2 = ({ className }: { className: string }) => (
-  <svg 
-    className={className} 
-    fill="none" 
-    viewBox="0 0 24 24" 
-    stroke="currentColor" 
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
     strokeWidth={2}
   >
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

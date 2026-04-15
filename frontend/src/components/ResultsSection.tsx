@@ -40,7 +40,7 @@ const SectionSeparator = ({ text }: { text: string }) => (
 
 const AssumptionsPanel = ({ country }: { country: string }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const assumptions: Record<string, Array<{ label: string, value: string }>> = {
     'Bangladesh': [
       { label: 'DPS return rate', value: '7.0% (Bangladesh Bank standard)' },
@@ -68,19 +68,19 @@ const AssumptionsPanel = ({ country }: { country: string }) => {
 
   return (
     <div className="mt-8 border-t border-charcoal-800 pt-4">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cream/40 hover:text-cream/60 transition-colors mx-auto"
       >
         <span>How We Calculate This</span>
-        <svg 
-          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        <svg
+          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -121,6 +121,8 @@ export function ResultsSection({ data, onRecoveryComplete, onBack }: ResultsSect
   const [showToast, setShowToast] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
   const [shareText, setShareText] = useState('')
+  const [showExitLock, setShowExitLock] = useState(false)
+  const [hoverLeave, setHoverLeave] = useState(false)
 
   const totalCost = data.simulation?.total_inaction_cost || 0
   const categories = data.simulation?.categories || {}
@@ -200,7 +202,7 @@ Calculate yours: ${window.location.origin}`
   const country = data.profile?.country || 'US'
   const income = avgIncomes[country] || 65000
   const targetAge = Number((totalCost / income).toFixed(1))
-  
+
   const count = useMotionValue(0)
   const rounded = useTransform(count, (latest) => latest.toFixed(1))
 
@@ -220,6 +222,15 @@ Calculate yours: ${window.location.origin}`
     };
   };
 
+  const getImpactText = (step: any) => {
+    const amount = step?.amount_recovered || Math.max(1, Math.round(totalCost * 0.02))
+    const timeframe = step?.week
+      ? `week ${step.week}`
+      : (step?.month ? `month ${step.month}` : (step?.year ? `year ${step.year}` : 'the next 30 days'))
+
+    return `Impact: prevents ${currency}${Number(amount).toLocaleString()} loss in ${timeframe}`
+  }
+
   if (!data) return null
 
   return (
@@ -232,7 +243,7 @@ Calculate yours: ${window.location.origin}`
             Calculated using Bangladesh Bank rates, DSE historical data, and Sanchayapatra terms as of 2025
           </div>
         )}
-        
+
         {/* Inaction Age Score */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -243,9 +254,9 @@ Calculate yours: ${window.location.origin}`
           <div className="text-xs font-mono uppercase tracking-[0.3em] text-cream/30 mb-6">
             Financial Impact Score
           </div>
-          
+
           <div className="flex flex-col items-center justify-center">
-            <motion.div 
+            <motion.div
               className="text-6xl md:text-8xl font-display font-extrabold leading-none mb-4 text-red-500"
             >
               {rounded}
@@ -259,28 +270,33 @@ Calculate yours: ${window.location.origin}`
             <div className="text-[10px] font-mono uppercase tracking-widest text-cream/20">
               Based on average {country} income
             </div>
+            <div className="mt-3 text-[11px] font-mono uppercase tracking-wider text-cream/35">
+              Model: {country} • Based on local savings, inflation, and return data
+            </div>
           </div>
         </motion.div>
 
-        <ForceActionSystem 
-          totalCost={totalCost} 
-          categories={categories} 
-          country={country} 
-          currency={currency} 
-          yearsAtSameSalary={data.profile?.years_at_same_salary || 1}
-          subscriptionsCount={data.profile?.subscriptions?.length || 3}
-        />
-        
+        <div id="recovery-start">
+          <ForceActionSystem
+            totalCost={totalCost}
+            categories={categories}
+            country={country}
+            currency={currency}
+            yearsAtSameSalary={data.profile?.years_at_same_salary || 1}
+            subscriptionsCount={data.profile?.subscriptions?.length || 3}
+          />
+        </div>
+
         <SectionSeparator text="Here is what happens if you wait even longer." />
         <DelaySlider totalLoss={totalCost} country={country} currency={currency} />
-        
+
         <SectionSeparator text="Here is what starting today actually looks like." />
         <RecoveryChart totalLoss={totalCost} country={country} currency={currency} />
 
         <PeerComparison userLoss={totalCost} country={country} />
-        
+
         <SocialPressurePanel userLoss={totalCost} country={country} currency={currency} />
-        
+
         <SectionSeparator text="Here is what you do about it." />
         {/* Header */}
         <motion.div
@@ -290,7 +306,7 @@ Calculate yours: ${window.location.origin}`
         >
 
           <button
-            onClick={onBack}
+            onClick={() => setShowExitLock(true)}
             className="flex items-center gap-2 text-cream/50 hover:text-lime transition-colors mb-8 text-sm font-mono uppercase tracking-wider"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -344,6 +360,9 @@ Calculate yours: ${window.location.origin}`
               <div className="mt-4 text-cream/50 text-sm">
                 Over {data.profile?.years_at_same_salary || 0} years of inaction
               </div>
+              <div className="mt-3 text-[10px] font-mono uppercase tracking-wider text-cream/35">
+                Updated using historical averages • recalculated just now
+              </div>
             </SpotlightCard>
           </motion.div>
 
@@ -367,6 +386,9 @@ Calculate yours: ${window.location.origin}`
               </div>
               <div className="mt-2 text-cream/50 text-sm">
                 Every day you wait
+              </div>
+              <div className="mt-3 text-[10px] font-mono uppercase tracking-wider text-cream/35">
+                Updated using historical averages • recalculated just now
               </div>
             </SpotlightCard>
           </motion.div>
@@ -444,6 +466,9 @@ Calculate yours: ${window.location.origin}`
                   transition={{ duration: 2, repeat: Infinity }}
                 />
               </div>
+              <div className="text-[10px] font-mono uppercase tracking-wider text-cream/40 mb-5">
+                Generated from your loss profile (not generic advice)
+              </div>
 
               {(() => {
                 return (
@@ -454,7 +479,7 @@ Calculate yours: ${window.location.origin}`
                     />
 
                     {roadmap && Array.isArray(roadmap) && (
-                      <motion.div 
+                      <motion.div
                         initial="hidden"
                         animate="visible"
                         variants={containerVariants}
@@ -469,7 +494,7 @@ Calculate yours: ${window.location.origin}`
                             <div className="absolute top-0 left-0 bg-lime/10 text-lime px-3 py-1 text-[10px] font-mono uppercase tracking-tighter border-br border-charcoal-700">
                               {step.week ? `Week ${step.week}` : (step.month ? `Month ${step.month}` : `Year ${step.year}`)}
                             </div>
-                            
+
                             <h4 className="text-cream font-display font-bold mb-2 mt-4">
                               {step.title}
                             </h4>
@@ -479,8 +504,9 @@ Calculate yours: ${window.location.origin}`
                             <div className="text-[11px] font-mono text-emerald-500 font-extrabold pt-2 border-t border-charcoal-800 flex flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 <span className="w-2 h-[1px] bg-emerald-500/40" />
-                                IMPACT: {step.impact}
+                                {getImpactText(step)}
                               </div>
+                              <div className="text-cream/50 pl-4">{step.impact}</div>
                               {step.category && (
                                 <div className="text-cyan-400 font-mono text-[10px] uppercase tracking-wider pl-4">
                                   Addresses: {step.category} — recovers {currency}{step.amount_recovered?.toLocaleString() || 0}
@@ -541,20 +567,20 @@ Calculate yours: ${window.location.origin}`
                     <CheckCircle className="w-5 h-5" />
                   </motion.button>
                 </div>
-                
+
                 {country === 'Bangladesh' && (
                   <div className="mt-4 pt-4 border-t border-charcoal-800/50">
                     <div className="text-[10px] font-mono text-amber-500/80 leading-relaxed italic">
                       {(() => {
                         const baseCategory = category.split(":")[0].trim();
-                        switch(baseCategory) {
-                          case 'Idle Mobile Banking': 
+                        switch (baseCategory) {
+                          case 'Idle Mobile Banking':
                             return "Most Bangladeshi users keep 60-80% of liquid savings in mobile wallets earning half the rate of a standard FD.";
-                          case 'Missed DPS': 
+                          case 'Missed DPS':
                             return "A ৳2,000/month DPS started at age 25 vs 30 means ৳340,000 less at maturity. Same contribution. Five years difference.";
-                          case 'Salary Not Negotiated': 
+                          case 'Salary Not Negotiated':
                             return "In Bangladesh's corporate sector, only 23% of employees negotiate their first offer. The ones who do earn 12-18% more on average.";
-                          case 'Sanchayapatra Missed': 
+                          case 'Sanchayapatra Missed':
                             return "Bangladesh Sanchayapatra offers 11.28-11.76% return — one of the highest guaranteed rates in South Asia. Most eligible users never apply.";
                           default: return null;
                         }
@@ -562,10 +588,10 @@ Calculate yours: ${window.location.origin}`
                     </div>
                   </div>
                 )}
-                
+
                 <div className="mt-4 pt-4 border-t border-charcoal-800 text-[10px] font-mono text-cream/20 uppercase tracking-tight">
                   {(() => {
-                    switch(category) {
+                    switch (category) {
                       case 'idle_savings_cost': return `Based on ${country} FD vs savings rate differential`;
                       case 'mobile_banking_idle_cost': return "Based on bKash/Nagad vs Bank FD rate differential";
                       case 'missed_investments_cost': return "Based on S&P 500 10-year average return";
@@ -663,7 +689,7 @@ Calculate yours: ${window.location.origin}`
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-charcoal-900 border border-indigo-500/30 p-8 rounded-2xl max-w-lg w-full relative"
               >
-                <button 
+                <button
                   onClick={() => setShowFallback(false)}
                   className="absolute top-4 right-4 text-cream/40 hover:text-cream"
                 >
@@ -671,8 +697,8 @@ Calculate yours: ${window.location.origin}`
                 </button>
                 <h3 className="text-xl font-display font-bold text-cream mb-4">Share Your Results</h3>
                 <p className="text-cream/50 text-sm mb-6">Clipboard access denied. Copy the text below manually:</p>
-                <textarea 
-                  readOnly 
+                <textarea
+                  readOnly
                   value={shareText}
                   className="w-full h-40 bg-charcoal-950 border border-charcoal-700 rounded-lg p-4 text-cream/80 text-sm font-mono mb-6 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
@@ -689,6 +715,52 @@ Calculate yours: ${window.location.origin}`
                   <Copy className="w-5 h-5" />
                   Select & Copy All
                 </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showExitLock && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[210] bg-charcoal-950/90 backdrop-blur-sm flex items-center justify-center p-6"
+            >
+              <motion.div
+                initial={{ scale: 0.96, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-charcoal-900 border border-red-500/40 p-8 rounded-2xl max-w-lg w-full"
+              >
+                <h3 className="text-2xl font-display font-black text-cream mb-4">Before you leave</h3>
+                <p className="text-cream/70 mb-6 leading-relaxed">
+                  If you do nothing, you will lose approximately{' '}
+                  <span className="text-red-500 font-bold">
+                    {currency}{Math.round((totalCost / Math.max(1, (data.profile?.years_at_same_salary || 1) * 365)) * 7 * (hoverLeave ? 1.03 : 1)).toLocaleString()}
+                  </span>{' '}
+                  in the next 7 days.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onMouseEnter={() => setHoverLeave(true)}
+                    onMouseLeave={() => setHoverLeave(false)}
+                    onClick={onBack}
+                    className="flex-1 border border-charcoal-600 text-cream/80 py-3 rounded-lg font-display font-bold uppercase tracking-wider hover:border-red-500/50 hover:text-red-400 transition-colors"
+                  >
+                    Leave anyway
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowExitLock(false)
+                      const el = document.getElementById('recovery-start')
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                    className="flex-1 bg-emerald-500 text-charcoal-950 py-3 rounded-lg font-display font-black uppercase tracking-wider hover:bg-emerald-400 transition-colors"
+                  >
+                    Start recovery
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}
