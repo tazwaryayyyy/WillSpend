@@ -43,12 +43,35 @@ function App() {
   const [analysisData, setAnalysisData] = useState<any>(null)
   const [recoveryActions, setRecoveryActions] = useState<any[]>([])
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }
+
   useEffect(() => {
     const stored = localStorage.getItem('recoveryActions')
     if (stored) {
       setRecoveryActions(JSON.parse(stored))
     }
   }, [])
+
+  useEffect(() => {
+    if (!showResults || !analysisData) {
+      return
+    }
+
+    // Lazy/Suspense and animated mounts can shift layout after the first paint.
+    // Force top on current frame and shortly after mount stabilization.
+    scrollToTop()
+    const rafId = window.requestAnimationFrame(() => scrollToTop())
+    const timeoutId = window.setTimeout(() => scrollToTop(), 60)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [showResults, analysisData])
 
   const dailyLossRate = analysisData?.simulation?.total_inaction_cost
     ? analysisData.simulation.total_inaction_cost / ((analysisData.profile?.years_at_same_salary || 1) * 365)
@@ -94,6 +117,7 @@ function App() {
             <HeroSection />
             <FormSection
               onSubmit={(data: any) => {
+                scrollToTop()
                 setAnalysisData(data)
                 setShowResults(true)
               }}
