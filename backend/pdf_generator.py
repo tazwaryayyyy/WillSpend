@@ -3,10 +3,13 @@ from datetime import datetime
 from typing import Dict, Any, List
 from io import BytesIO
 from reportlab.lib.pagesizes import A4  # type: ignore[import-not-found]
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[import-not-found]
+# type: ignore[import-not-found]
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch  # type: ignore[import-not-found]
-from reportlab.lib.colors import HexColor, white  # type: ignore[import-not-found]
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak  # type: ignore[import-not-found]
+# type: ignore[import-not-found]
+from reportlab.lib.colors import HexColor, white
+# type: ignore[import-not-found]
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.enums import TA_CENTER  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
