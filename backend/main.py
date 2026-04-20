@@ -97,6 +97,7 @@ async def unhandled_exception_handler(_: Request, exc: Exception):
 
 
 @app.post("/analyze", response_model=WillSpendResponse)
+@app.post("/api/analyze", response_model=WillSpendResponse)
 async def analyze(profile: UserProfile):
     request_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{hash(str(profile.dict())) % 10000}"
     logger.info(
@@ -153,6 +154,7 @@ async def analyze(profile: UserProfile):
 
 
 @app.post("/advisor")
+@app.post("/api/advisor")
 async def advisor_endpoint(request: AdvisorRequest):
     """
     Dedicated endpoint for the AI Advisor using anchored category losses.
@@ -194,6 +196,7 @@ def health():
 
 
 @app.post("/validate_recovery")
+@app.post("/api/validate_recovery")
 async def validate_recovery(action: RecoveryAction):
     """
     Validate recovery action for tracking purposes.
@@ -236,6 +239,7 @@ async def validate_recovery(action: RecoveryAction):
 
 
 @app.post("/generate_report")
+@app.post("/api/generate_report")
 async def generate_report_pdf_endpoint(request: PDFReportRequest):
     """
     Generate PDF report for the financial analysis.
