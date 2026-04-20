@@ -1,25 +1,24 @@
-import os
 import logging
 from datetime import datetime
 from typing import Dict, Any, List
 from io import BytesIO
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.lib.colors import HexColor, black, white
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.platypus.tableofcontents import TableOfContents
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import A4  # type: ignore[import-not-found]
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[import-not-found]
+from reportlab.lib.units import inch  # type: ignore[import-not-found]
+from reportlab.lib.colors import HexColor, white  # type: ignore[import-not-found]
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak  # type: ignore[import-not-found]
+from reportlab.lib.enums import TA_CENTER  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 
+
 class PDFReportGenerator:
     """Generate professional PDF reports for WillSpend analysis."""
-    
+
     def __init__(self):
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
-    
+
     def _setup_custom_styles(self):
         """Setup custom styles for the PDF report."""
         # Custom title style
@@ -31,7 +30,7 @@ class PDFReportGenerator:
             textColor=HexColor('#2E4057'),
             alignment=TA_CENTER
         ))
-        
+
         # Custom heading style
         self.styles.add(ParagraphStyle(
             name='CustomHeading',
@@ -42,7 +41,7 @@ class PDFReportGenerator:
             borderWidth=0,
             borderPadding=5
         ))
-        
+
         # Custom subheading style
         self.styles.add(ParagraphStyle(
             name='CustomSubheading',
@@ -51,7 +50,7 @@ class PDFReportGenerator:
             spaceAfter=8,
             textColor=HexColor('#54C6EB')
         ))
-        
+
         # Custom body style
         self.styles.add(ParagraphStyle(
             name='CustomBody',
@@ -60,27 +59,29 @@ class PDFReportGenerator:
             spaceAfter=6,
             leading=14
         ))
-    
+
     def _create_summary_table(self, simulation_data: Dict[str, Any]) -> Table:
         """Create summary table of losses by category."""
         data = [['Category', 'Amount Lost', 'Action Hint', '1-Year Recovery']]
-        
+
         categories = simulation_data.get('categories', {})
         country = simulation_data.get('country', 'US')
-        currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
-        
+        currency = '৳' if country == 'Bangladesh' else (
+            '₹' if country == 'India' else '$')
+
         for category, details in categories.items():
             amount = f"{currency}{details.get('amount', 0):,.2f}"
             action_hint = details.get('action_hint', 'N/A')
             recovery = f"{currency}{details.get('estimated_recovery_1year', 0):,.2f}"
             data.append([category, amount, action_hint, recovery])
-        
+
         # Add total row
         total_loss = simulation_data.get('total_inaction_cost', 0)
-        data.append(['<b>TOTAL LOSS</b>', f'<b>{currency}{total_loss:,.2f}</b>', '', ''])
-        
+        data.append(
+            ['<b>TOTAL LOSS</b>', f'<b>{currency}{total_loss:,.2f}</b>', '', ''])
+
         table = Table(data, colWidths=[2.5*inch, 1.2*inch, 2*inch, 1.2*inch])
-        
+
         # Style the table
         table.setStyle(TableStyle([
             # Header styling
@@ -89,40 +90,42 @@ class PDFReportGenerator:
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            
+
             # Data rows
             ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
             ('FONTSIZE', (0, 1), (-1, -2), 10),
             ('GRID', (0, 0), (-1, -1), 1, HexColor('#CCCCCC')),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 8),
-            
+
             # Total row styling
             ('BACKGROUND', (0, -1), (-1, -1), HexColor('#FFE5E5')),
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, -1), (-1, -1), 12),
         ]))
-        
+
         return table
-    
+
     def _create_action_plan_checklist(self, simulation_data: Dict[str, Any]) -> List:
         """Create action plan checklist from top 3 recovery actions."""
         elements = []
-        
-        elements.append(Paragraph("Action Plan Checklist", self.styles['CustomSubheading']))
+
+        elements.append(Paragraph("Action Plan Checklist",
+                        self.styles['CustomSubheading']))
         elements.append(Spacer(1, 12))
-        
+
         categories = simulation_data.get('categories', {})
         # Sort by recovery amount (highest first)
         sorted_categories = sorted(
-            categories.items(), 
-            key=lambda x: x[1].get('estimated_recovery_1year', 0), 
+            categories.items(),
+            key=lambda x: x[1].get('estimated_recovery_1year', 0),
             reverse=True
         )
-        
+
         country = simulation_data.get('country', 'US')
-        currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
-        
+        currency = '৳' if country == 'Bangladesh' else (
+            '₹' if country == 'India' else '$')
+
         # Take top 3 actions
         for i, (category, details) in enumerate(sorted_categories[:3], 1):
             action_text = f"""
@@ -134,37 +137,40 @@ class PDFReportGenerator:
             """
             elements.append(Paragraph(action_text, self.styles['CustomBody']))
             elements.append(Spacer(1, 8))
-        
+
         return elements
-    
-    def generate_pdf_report(self, 
-                           simulation_data: Dict[str, Any], 
-                           user_profile: Dict[str, Any], 
-                           ai_advice: str) -> bytes:
+
+    def generate_pdf_report(self,
+                            simulation_data: Dict[str, Any],
+                            user_profile: Dict[str, Any],
+                            ai_advice: str) -> bytes:
         """
         Generate a complete PDF report.
-        
+
         Args:
             simulation_data: Simulation results with categories
             user_profile: User profile information
             ai_advice: AI-generated advice
-            
+
         Returns:
             PDF as bytes
         """
         try:
             buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+            doc = SimpleDocTemplate(
+                buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
             elements = []
-            
+
             # Title
-            elements.append(Paragraph("WillSpend Financial Analysis Report", self.styles['CustomTitle']))
+            elements.append(
+                Paragraph("WillSpend Financial Analysis Report", self.styles['CustomTitle']))
             elements.append(Spacer(1, 20))
-            
+
             # Report metadata
             country = user_profile.get('country', 'US')
-            currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
-            
+            currency = '৳' if country == 'Bangladesh' else (
+                '₹' if country == 'India' else '$')
+
             metadata = f"""
             <b>Generated on:</b> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}<br/>
             <b>User Profile:</b> Age {user_profile.get('age', 'N/A')}, {country}<br/>
@@ -172,14 +178,16 @@ class PDFReportGenerator:
             """
             elements.append(Paragraph(metadata, self.styles['CustomBody']))
             elements.append(Spacer(1, 20))
-            
+
             # Executive Summary
-            elements.append(Paragraph("Executive Summary", self.styles['CustomHeading']))
+            elements.append(Paragraph("Executive Summary",
+                            self.styles['CustomHeading']))
             total_loss = simulation_data.get('total_inaction_cost', 0)
             num_categories = len(simulation_data.get('categories', {}))
             country = user_profile.get('country', 'US')
-            currency = '৳' if country == 'Bangladesh' else ('₹' if country == 'India' else '$')
-            
+            currency = '৳' if country == 'Bangladesh' else (
+                '₹' if country == 'India' else '$')
+
             summary = f"""
             This analysis identified a total financial loss of <b>{currency}{total_loss:,.2f}</b> due to inaction across 
             <b>{num_categories}</b> categories. The largest opportunity for recovery comes from taking immediate 
@@ -188,30 +196,35 @@ class PDFReportGenerator:
             """
             elements.append(Paragraph(summary, self.styles['CustomBody']))
             elements.append(Spacer(1, 20))
-            
+
             # Summary Table
-            elements.append(Paragraph("Loss Breakdown by Category", self.styles['CustomHeading']))
+            elements.append(
+                Paragraph("Loss Breakdown by Category", self.styles['CustomHeading']))
             elements.append(Spacer(1, 12))
             elements.append(self._create_summary_table(simulation_data))
             elements.append(Spacer(1, 20))
-            
+
             # Page break for detailed sections
             elements.append(PageBreak())
-            
+
             # AI Advice Section
-            elements.append(Paragraph("AI Financial Advisor Insights", self.styles['CustomHeading']))
+            elements.append(
+                Paragraph("AI Financial Advisor Insights", self.styles['CustomHeading']))
             elements.append(Spacer(1, 12))
-            
+
             # Clean up AI advice for PDF
-            clean_advice = ai_advice.replace('##', '').replace('**', '').replace('*', '')
+            clean_advice = ai_advice.replace(
+                '##', '').replace('**', '').replace('*', '')
             elements.append(Paragraph(clean_advice, self.styles['CustomBody']))
             elements.append(Spacer(1, 20))
-            
+
             # Action Plan
-            elements.append(Paragraph("Your Recovery Action Plan", self.styles['CustomHeading']))
-            elements.extend(self._create_action_plan_checklist(simulation_data))
+            elements.append(
+                Paragraph("Your Recovery Action Plan", self.styles['CustomHeading']))
+            elements.extend(
+                self._create_action_plan_checklist(simulation_data))
             elements.append(Spacer(1, 20))
-            
+
             # Footer
             elements.append(PageBreak())
             footer_text = """
@@ -222,32 +235,33 @@ class PDFReportGenerator:
             <font color="gray">Generated by WillSpend – your first step to recovering lost wealth.</font>
             """
             elements.append(Paragraph(footer_text, self.styles['CustomBody']))
-            
+
             # Build PDF
             doc.build(elements)
-            
+
             # Get PDF bytes
             pdf_bytes = buffer.getvalue()
             buffer.close()
-            
+
             logger.info("PDF report generated successfully")
             return pdf_bytes
-            
-        except Exception as e:
-            logger.error(f"PDF generation failed: {str(e)}")
-            raise Exception(f"Failed to generate PDF report: {str(e)}")
 
-def generate_report_pdf(simulation_data: Dict[str, Any], 
-                      user_profile: Dict[str, Any], 
-                      ai_advice: str) -> bytes:
+        except Exception as e:
+            logger.error("PDF generation failed: %s", e)
+            raise RuntimeError(f"Failed to generate PDF report: {e}") from e
+
+
+def generate_report_pdf(simulation_data: Dict[str, Any],
+                        user_profile: Dict[str, Any],
+                        ai_advice: str) -> bytes:
     """
     Convenience function to generate PDF report.
-    
+
     Args:
         simulation_data: Simulation results
         user_profile: User profile
         ai_advice: AI-generated advice
-        
+
     Returns:
         PDF as bytes
     """

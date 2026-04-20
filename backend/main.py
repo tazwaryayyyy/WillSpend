@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pdf_generator import generate_report_pdf
 from ai_advisor import generate_report
 from models import UserProfile, WillSpendResponse, AdvisorRequest
@@ -36,9 +36,9 @@ class RecoveryAction(BaseModel):
 
 
 class PDFReportRequest(BaseModel):
-    simulation: dict
-    user_profile: dict
-    ai_advice: str
+    simulation: dict = Field(default_factory=dict)
+    user_profile: dict = Field(default_factory=dict)
+    ai_advice: str = ""
 
 
 app = FastAPI(title="WillSpend API")

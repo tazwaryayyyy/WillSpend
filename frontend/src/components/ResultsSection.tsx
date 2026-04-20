@@ -133,10 +133,14 @@ export function ResultsSection({ data, onRecoveryComplete, onBack }: ResultsSect
   const handleDownloadPDF = async () => {
     setIsGeneratingPDF(true)
     try {
+      const aiAdviceForPdf = typeof data.ai_report === 'string' && data.ai_report.trim().length > 0
+        ? data.ai_report
+        : 'AI advisor summary was unavailable at export time. Please rerun analysis for personalized guidance.'
+
       const response = await apiClient.post('/api/generate_report', {
         simulation: data.simulation,
         user_profile: data.profile,
-        ai_advice: data.ai_report
+        ai_advice: aiAdviceForPdf
       }, { responseType: 'blob' })
 
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
