@@ -96,11 +96,11 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
 
   // Action Generation Logic
   const getActionSteps = () => {
-    const sortedCats = Object.entries(categories)
+    const sortedCats = Object.entries(categories || {})
       .sort((a: any, b: any) => b[1].amount - a[1].amount)
       .slice(0, 3)
 
-    return sortedCats.map(([key, details]: [string, any]) => {
+    const generatedSteps = sortedCats.map(([key, details]: [string, any]) => {
       const amount = details.amount
 
       switch (key) {
@@ -147,6 +147,33 @@ export function ForceActionSystem({ totalCost, categories, country, currency, ye
           }
       }
     })
+
+    const fallbackSteps = [
+      {
+        title: country === 'India' ? 'Start a ₹500 SIP today' : (country === 'Bangladesh' ? 'Start a ৳500 DPS today' : 'Start a $50 index fund transfer today'),
+        impact: 'A small auto-investment started now compounds faster than waiting for a perfect month.'
+      },
+      {
+        title: 'Automate your savings transfer tonight',
+        impact: 'Automation lowers missed transfers and helps this loss trend reverse.'
+      },
+      {
+        title: 'Block 10 minutes to review one recurring expense',
+        impact: 'Removing one low-value expense this week creates immediate monthly breathing room.'
+      }
+    ]
+
+    const uniqueSteps = generatedSteps.filter((step, idx, arr) => (
+      arr.findIndex((candidate) => candidate.title === step.title) === idx
+    ))
+
+    for (const fallbackStep of fallbackSteps) {
+      if (uniqueSteps.length >= 3) break
+      const alreadyExists = uniqueSteps.some((step) => step.title === fallbackStep.title)
+      if (!alreadyExists) uniqueSteps.push(fallbackStep)
+    }
+
+    return uniqueSteps.slice(0, 3)
   }
 
   const steps = getActionSteps()
