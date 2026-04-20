@@ -49,6 +49,21 @@ function App() {
     document.body.scrollTop = 0
   }
 
+  const returnToAnalysisForm = () => {
+    setShowResults(false)
+    setAnalysisData(null)
+
+    // Wait for form layout to mount, then jump directly to analysis form.
+    window.setTimeout(() => {
+      const form = document.getElementById('analysis-form')
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else {
+        scrollToTop()
+      }
+    }, 0)
+  }
+
   useEffect(() => {
     const stored = localStorage.getItem('recoveryActions')
     if (stored) {
@@ -109,7 +124,7 @@ function App() {
                 setRecoveryActions(updated)
                 localStorage.setItem('recoveryActions', JSON.stringify(updated))
               }}
-              onBack={() => setShowResults(false)}
+              onBack={returnToAnalysisForm}
             />
           </Suspense>
         ) : (
